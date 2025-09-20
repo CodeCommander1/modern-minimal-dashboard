@@ -25,8 +25,8 @@ import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-// Removed unused Select imports tied to Guided Goal Setting
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// Restore Select imports to fix runtime error due to existing JSX usage
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
