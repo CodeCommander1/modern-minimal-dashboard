@@ -30,6 +30,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<"student" | "college">("student");
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -67,6 +68,9 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
 
       console.log("signed in");
 
+      try {
+        localStorage.setItem("userRole", role);
+      } catch {}
       const redirect = redirectAfterAuth || "/";
       navigate(redirect);
     } catch (error) {
@@ -83,6 +87,9 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setIsLoading(true);
     setError(null);
     try {
+      try {
+        localStorage.setItem("userRole", role);
+      } catch {}
       console.log("Attempting anonymous sign in...");
       await signIn("anonymous");
       console.log("Anonymous sign in successful");
@@ -106,6 +113,26 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
         <Card className="min-w-[350px] pb-0 border shadow-md">
           {step === "signIn" ? (
             <>
+              <div className="px-6 pt-4 flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={role === "student" ? "default" : "outline"}
+                  onClick={() => setRole("student")}
+                  disabled={isLoading}
+                >
+                  I'm a Student
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={role === "college" ? "default" : "outline"}
+                  onClick={() => setRole("college")}
+                  disabled={isLoading}
+                >
+                  I'm a College
+                </Button>
+              </div>
               <CardHeader className="text-center">
               <div className="flex justify-center">
                     <img
@@ -117,9 +144,13 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       onClick={() => navigate("/")}
                     />
                   </div>
-                <CardTitle className="text-xl">Get Started</CardTitle>
+                <CardTitle className="text-xl">
+                  {role === "college" ? "College Login" : "Get Started"}
+                </CardTitle>
                 <CardDescription>
-                  Enter your email to log in or sign up
+                  {role === "college"
+                    ? "Enter your college email to log in or sign up"
+                    : "Enter your email to log in or sign up"}
                 </CardDescription>
               </CardHeader>
               <form onSubmit={handleEmailSubmit}>
@@ -174,7 +205,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       disabled={isLoading}
                     >
                       <UserX className="mr-2 h-4 w-4" />
-                      Continue as Guest
+                      Continue as {role === "college" ? "College (Guest)" : "Guest"}
                     </Button>
                   </div>
                 </CardContent>
