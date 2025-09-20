@@ -25,7 +25,7 @@ import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-// Restore Select imports to fix runtime error due to existing JSX usage
+// Restore Select imports to fix runtime error where <Select/> is still used somewhere in this file
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
