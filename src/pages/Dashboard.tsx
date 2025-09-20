@@ -1058,6 +1058,20 @@ export default function Dashboard() {
                 </div>
               </DashboardCard>
             )}
+
+            {/* Government Colleges */}
+            <DashboardCard
+              title="GOVERNMENT COLLEGES"
+              description="Explore top government institutions"
+              icon={GraduationCap}
+              onClick={() => navigate("/career-path")}
+            >
+              <div className="flex justify-end">
+                <Button size="sm" onClick={() => navigate("/career-path")}>
+                  Government Colleges
+                </Button>
+              </div>
+            </DashboardCard>
           </div>
         </motion.div>
       </main>
