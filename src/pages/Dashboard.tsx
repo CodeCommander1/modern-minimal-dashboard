@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 // ADD: Chart helpers and Recharts
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart as RePieChart, Pie, Cell, Tooltip as ReTooltip, Legend as ReLegend, ResponsiveContainer } from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Dashboard() {
   const { isLoading, isAuthenticated, user } = useAuth();
@@ -226,6 +227,63 @@ export default function Dashboard() {
       toast.error("Failed to save recommendation");
     }
   }
+
+  // Fetch all scores for Class 10 and Class 12 to drive the pie charts
+  const class10Scores = useQuery(api.dashboard.getScoresByClassStream, { classLevel: "class10" }) ?? [];
+  const class12Scores = useQuery(api.dashboard.getScoresByClassStream, { classLevel: "class12" }) ?? [];
+
+  // Helper: Build category distribution for a set of scores
+  // Categories:
+  // - Strong Areas: percentage >= 80
+  // - Needs Improvement: 50 <= percentage < 80
+  // - Weaknesses: percentage < 50
+  function buildCategoryDistribution(
+    items: Array<{ subject: string; score: number; maxScore: number }>
+  ): Array<{ name: "Strong Areas" | "Needs Improvement" | "Weaknesses"; value: number }> {
+    // Aggregate by subject to avoid duplicates, summing scores and maxScore
+    const bySubject: Record<string, { total: number; max: number }> = {};
+    for (const s of items) {
+      if (!s?.subject) continue;
+      if (!bySubject[s.subject]) bySubject[s.subject] = { total: 0, max: 0 };
+      bySubject[s.subject].total += Number(s.score) || 0;
+      bySubject[s.subject].max += Number(s.maxScore) || 0;
+    }
+
+    let strong = 0;
+    let mid = 0;
+    let weak = 0;
+
+    for (const { total, max } of Object.values(bySubject)) {
+      const pct = max > 0 ? (total / max) * 100 : 0;
+      if (pct >= 80) strong += 1;
+      else if (pct >= 50) mid += 1;
+      else weak += 1;
+    }
+
+    // If no subjects available, show a neutral baseline so the chart renders
+    if (strong + mid + weak === 0) {
+      return [
+        { name: "Strong Areas", value: 1 },
+        { name: "Needs Improvement", value: 1 },
+        { name: "Weaknesses", value: 1 },
+      ];
+    }
+
+    return [
+      { name: "Strong Areas", value: strong },
+      { name: "Needs Improvement", value: mid },
+      { name: "Weaknesses", value: weak },
+    ];
+  }
+
+  const class10Distribution = buildCategoryDistribution(class10Scores as any);
+  const class12Distribution = buildCategoryDistribution(class12Scores as any);
+
+  const CATEGORY_COLORS: Record<string, string> = {
+    "Strong Areas": "oklch(70% 0.12 140)", // green-ish
+    "Needs Improvement": "oklch(70% 0.16 60)", // warm yellow/orange
+    "Weaknesses": "oklch(70% 0.15 25)", // red-ish
+  };
 
   useEffect(() => {
     setGoalInput(dashboardData?.user?.currentCareerGoal ?? "");
@@ -545,53 +603,111 @@ export default function Dashboard() {
               description="Identify areas to work on"
               icon={PieChart}
             >
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <p className="text-xs text-muted-foreground">
-                  Weakness is calculated as 100 − (score/max × 100). Higher slice = more improvement needed.
+                  We classify each subject by normalized score percentage: Strong Areas (≥ 80%), Needs Improvement (50–79%), Weaknesses (&lt; 50%).
                 </p>
-                <div className="h-56">
-                  <ChartContainer
-                    id="weakness-pie"
-                    config={
-                      weaknessesData.reduce((acc, d, idx) => {
-                        acc[d.name] = { label: d.name, color: PIE_COLORS[idx % PIE_COLORS.length] };
-                        return acc;
-                      }, {} as Record<string, { label: string; color: string }>)
-                    }
-                    className="w-full h-full"
-                  >
-                    <ResponsiveContainer>
-                      <RePieChart>
-                        <Pie
-                          data={weaknessesData}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={40}
-                          outerRadius={80}
-                          paddingAngle={3}
-                          stroke="hsl(var(--border))"
-                          strokeWidth={1}
-                        >
-                          {weaknessesData.map((entry, index) => (
-                            <Cell key={`cell-${entry.name}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <ReTooltip
-                          content={
-                            <ChartTooltipContent
+
+                <Tabs defaultValue="class10" className="w-full">
+                  <TabsList className="grid grid-cols-2 w-full">
+                    <TabsTrigger value="class10">Class 10</TabsTrigger>
+                    <TabsTrigger value="class12">Class 12</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="class10">
+                    <div className="h-56">
+                      <ChartContainer
+                        id="weakness-pie-class10"
+                        config={{
+                          "Strong Areas": { label: "Strong Areas", color: CATEGORY_COLORS["Strong Areas"] },
+                          "Needs Improvement": { label: "Needs Improvement", color: CATEGORY_COLORS["Needs Improvement"] },
+                          "Weaknesses": { label: "Weaknesses", color: CATEGORY_COLORS["Weaknesses"] },
+                        }}
+                        className="w-full h-full"
+                      >
+                        <ResponsiveContainer>
+                          <RePieChart>
+                            <Pie
+                              data={class10Distribution}
+                              dataKey="value"
                               nameKey="name"
-                              labelKey="name"
-                              indicator="dot"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={40}
+                              outerRadius={80}
+                              paddingAngle={3}
+                              stroke="hsl(var(--border))"
+                              strokeWidth={1}
+                            >
+                              {class10Distribution.map((entry) => (
+                                <Cell key={`c10-${entry.name}`} fill={CATEGORY_COLORS[entry.name]} />
+                              ))}
+                            </Pie>
+                            <ReTooltip
+                              content={
+                                <ChartTooltipContent
+                                  nameKey="name"
+                                  labelKey="name"
+                                  indicator="dot"
+                                />
+                              }
                             />
-                          }
-                        />
-                        <ReLegend />
-                      </RePieChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
+                            <ReLegend />
+                          </RePieChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="class12">
+                    <div className="h-56">
+                      <ChartContainer
+                        id="weakness-pie-class12"
+                        config={{
+                          "Strong Areas": { label: "Strong Areas", color: CATEGORY_COLORS["Strong Areas"] },
+                          "Needs Improvement": { label: "Needs Improvement", color: CATEGORY_COLORS["Needs Improvement"] },
+                          "Weaknesses": { label: "Weaknesses", color: CATEGORY_COLORS["Weaknesses"] },
+                        }}
+                        className="w-full h-full"
+                      >
+                        <ResponsiveContainer>
+                          <RePieChart>
+                            <Pie
+                              data={class12Distribution}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={40}
+                              outerRadius={80}
+                              paddingAngle={3}
+                              stroke="hsl(var(--border))"
+                              strokeWidth={1}
+                            >
+                              {class12Distribution.map((entry) => (
+                                <Cell key={`c12-${entry.name}`} fill={CATEGORY_COLORS[entry.name]} />
+                              ))}
+                            </Pie>
+                            <ReTooltip
+                              content={
+                                <ChartTooltipContent
+                                  nameKey="name"
+                                  labelKey="name"
+                                  indicator="dot"
+                                />
+                              }
+                            />
+                            <ReLegend />
+                          </RePieChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+
+                <p className="text-xs text-muted-foreground">
+                  Recommendation: Focus more on your weak areas for better stream readiness.
+                </p>
               </div>
             </DashboardCard>
 
