@@ -138,6 +138,7 @@ export default function Dashboard() {
               title="SCORES"
               description="View your academic scores"
               icon={BarChart3}
+              onClick={() => navigate("/scores")}
             >
               <div className="space-y-2">
                 {dashboardData?.recentScores?.slice(0, 2).map((score, index) => (

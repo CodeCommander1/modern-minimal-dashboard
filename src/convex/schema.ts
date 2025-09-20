@@ -77,7 +77,16 @@ const schema = defineSchema(
       maxScore: v.number(),
       testDate: v.number(),
       testType: v.string(), // "quiz", "exam", "assignment", etc.
-    }).index("by_user", ["userId"]).index("by_user_subject", ["userId", "subject"]),
+      // Add class and stream support
+      classLevel: v.optional(v.union(v.literal("class10"), v.literal("class12"))),
+      stream: v.optional(v.union(v.literal("Science"), v.literal("Commerce"), v.literal("Arts"))),
+    })
+      .index("by_user", ["userId"])
+      .index("by_user_subject", ["userId", "subject"])
+      // New indexes for class/stream operations
+      .index("by_user_and_class", ["userId", "classLevel"])
+      .index("by_user_class_and_subject", ["userId", "classLevel", "subject"])
+      .index("by_user_class_stream_subject", ["userId", "classLevel", "stream", "subject"]),
 
     // Study materials
     studyMaterials: defineTable({

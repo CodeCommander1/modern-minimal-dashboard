@@ -170,3 +170,124 @@ export const getScholarships = query({
       .take(10);
   },
 });
+
+// Get scores by class and optionally stream (for class12)
+export const getScoresByClassStream = query({
+  args: {
+    classLevel: v.union(v.literal("class10"), v.literal("class12")),
+    stream: v.optional(v.union(v.literal("Science"), v.literal("Commerce"), v.literal("Arts"))),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
+
+    if (args.classLevel === "class10") {
+      return await ctx.db
+        .query("scores")
+        .withIndex("by_user_and_class", (q) => q.eq("userId", user._id).eq("classLevel", "class10"))
+        .collect();
+    }
+
+    // class12
+    if (args.stream) {
+      return await ctx.db
+        .query("scores")
+        .withIndex("by_user_class_stream_subject", (q) =>
+          q.eq("userId", user._id).eq("classLevel", "class12").eq("stream", args.stream!),
+        )
+        .collect();
+    }
+
+    // If stream not provided, return all class12 scores
+    return await ctx.db
+      .query("scores")
+      .withIndex("by_user_and_class", (q) => q.eq("userId", user._id).eq("classLevel", "class12"))
+      .collect();
+  },
+});
+
+// Save or update multiple scores at once
+export const saveScoresBulk = mutation({
+  args: {
+    classLevel: v.union(v.literal("class10"), v.literal("class12")),
+    stream: v.optional(v.union(v.literal("Science"), v.literal("Commerce"), v.literal("Arts"))),
+    scores: v.array(
+      v.object({
+        subject: v.string(),
+        score: v.number(),
+        maxScore: v.number(),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
+
+    const now = Date.now();
+
+    for (const s of args.scores) {
+      if (args.classLevel === "class12" && args.stream) {
+        // Try to find an existing document for class12 + stream + subject
+        const existing = await ctx.db
+          .query("scores")
+          .withIndex("by_user_class_stream_subject", (q) =>
+            q
+              .eq("userId", user._id)
+              .eq("classLevel", "class12")
+              .eq("stream", args.stream!)
+              .eq("subject", s.subject),
+          )
+          .unique();
+
+        if (existing) {
+          await ctx.db.patch(existing._id, {
+            score: s.score,
+            maxScore: s.maxScore,
+            testDate: now,
+            testType: "Annual",
+          });
+        } else {
+          await ctx.db.insert("scores", {
+            userId: user._id,
+            subject: s.subject,
+            score: s.score,
+            maxScore: s.maxScore,
+            testDate: now,
+            testType: "Annual",
+            classLevel: "class12",
+            stream: args.stream,
+          });
+        }
+      } else {
+        // class10 (no stream)
+        const existing = await ctx.db
+          .query("scores")
+          .withIndex("by_user_class_and_subject", (q) =>
+            q.eq("userId", user._id).eq("classLevel", "class10").eq("subject", s.subject),
+          )
+          .unique();
+
+        if (existing) {
+          await ctx.db.patch(existing._id, {
+            score: s.score,
+            maxScore: s.maxScore,
+            testDate: now,
+            testType: "Annual",
+          });
+        } else {
+          await ctx.db.insert("scores", {
+            userId: user._id,
+            subject: s.subject,
+            score: s.score,
+            maxScore: s.maxScore,
+            testDate: now,
+            testType: "Annual",
+            classLevel: "class10",
+          });
+        }
+      }
+    }
+
+    return "Saved";
+  },
+});

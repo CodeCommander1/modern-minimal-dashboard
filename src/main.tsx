@@ -13,6 +13,7 @@ import Landing from "./pages/Landing.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import ProgressTracker from "@/pages/ProgressTracker.tsx";
 import TodoList from "@/pages/TodoList.tsx";
+import Scores from "@/pages/Scores.tsx";
 import "./types/global.d.ts";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -53,6 +54,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/auth" element={<AuthPage redirectAfterAuth="/dashboard" />} />
             <Route path="/progress-tracker" element={<ProgressTracker />} />
             <Route path="/to-do-list" element={<TodoList />} />
+            <Route path="/scores" element={<Scores />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
