@@ -30,6 +30,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+// ADD: Chart helpers and Recharts
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { PieChart as RePieChart, Pie, Cell, Tooltip as ReTooltip, Legend as ReLegend, ResponsiveContainer } from "recharts";
 
 export default function Dashboard() {
   const { isLoading, isAuthenticated, user } = useAuth();
@@ -296,6 +299,47 @@ export default function Dashboard() {
   }
   const recommendedColleges = getRecommendedColleges(currentGoal);
 
+  // ADD: Build weaknesses data from recent scores
+  const weaknessesData = (() => {
+    const entries = dashboardData?.recentScores ?? [];
+    const agg: Record<string, { total: number; max: number }> = {};
+    for (const s of entries) {
+      if (!s || !s.subject) continue;
+      if (!agg[s.subject]) agg[s.subject] = { total: 0, max: 0 };
+      agg[s.subject].total += Number(s.score) || 0;
+      agg[s.subject].max += Number(s.maxScore) || 0;
+    }
+    const arr = Object.entries(agg)
+      .map(([subject, { total, max }]) => {
+        const pct = max > 0 ? (total / max) * 100 : 0;
+        const weakness = Math.max(0, Math.round(100 - pct));
+        return { name: subject, value: weakness };
+      })
+      .filter((d) => d.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+
+    if (arr.length === 0) {
+      // Fallback to guide users when no scores exist
+      return [
+        { name: "Math", value: 40 },
+        { name: "Physics", value: 30 },
+        { name: "Chemistry", value: 20 },
+        { name: "English", value: 10 },
+      ];
+    }
+    return arr;
+  })();
+
+  const PIE_COLORS: Array<string> = [
+    "hsl(var(--primary))",
+    "oklch(70% 0.15 25)",
+    "oklch(70% 0.12 140)",
+    "oklch(70% 0.13 300)",
+    "oklch(70% 0.16 60)",
+    "oklch(70% 0.12 210)",
+  ];
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -500,7 +544,56 @@ export default function Dashboard() {
               title="PIE CHART: WEAKNESS & FIELD TO IMPROVE"
               description="Identify areas to work on"
               icon={PieChart}
-            />
+            >
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Weakness is calculated as 100 − (score/max × 100). Higher slice = more improvement needed.
+                </p>
+                <div className="h-56">
+                  <ChartContainer
+                    id="weakness-pie"
+                    config={
+                      weaknessesData.reduce((acc, d, idx) => {
+                        acc[d.name] = { label: d.name, color: PIE_COLORS[idx % PIE_COLORS.length] };
+                        return acc;
+                      }, {} as Record<string, { label: string; color: string }>)
+                    }
+                    className="w-full h-full"
+                  >
+                    <ResponsiveContainer>
+                      <RePieChart>
+                        <Pie
+                          data={weaknessesData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={80}
+                          paddingAngle={3}
+                          stroke="hsl(var(--border))"
+                          strokeWidth={1}
+                        >
+                          {weaknessesData.map((entry, index) => (
+                            <Cell key={`cell-${entry.name}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <ReTooltip
+                          content={
+                            <ChartTooltipContent
+                              nameKey="name"
+                              labelKey="name"
+                              indicator="dot"
+                            />
+                          }
+                        />
+                        <ReLegend />
+                      </RePieChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+              </div>
+            </DashboardCard>
 
             {/* Advice */}
             <DashboardCard
