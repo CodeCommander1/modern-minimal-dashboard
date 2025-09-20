@@ -554,7 +554,7 @@ export default function Dashboard() {
                     <span>Answer 20 questions. Each correct answer = 1 point. Score shown out of 20.</span>
                   )}
                 </div>
-                <Button size="sm" onClick={() => setAptitudeOpen(true)}>
+                <Button size="sm" onClick={() => navigate("/aptitude-test")}>
                   Open Test
                 </Button>
               </div>
