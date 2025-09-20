@@ -44,6 +44,7 @@ export const getDashboardOverview = query({
         email: user.email,
         currentCareerGoal: user.currentCareerGoal,
         academicLevel: user.academicLevel,
+        interests: user.interests,
       },
     };
   },
