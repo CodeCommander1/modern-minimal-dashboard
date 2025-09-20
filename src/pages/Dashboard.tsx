@@ -604,9 +604,18 @@ export default function Dashboard() {
               icon={PieChart}
             >
               <div className="space-y-4">
-                <p className="text-xs text-muted-foreground">
-                  We classify each subject by normalized score percentage: Strong Areas (≥ 80%), Needs Improvement (50–79%), Weaknesses (&lt; 50%).
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    We classify each subject by normalized score percentage: Strong Areas (≥ 80%), Needs Improvement (50–79%), Weaknesses (&lt; 50%).
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate("/scores")}
+                  >
+                    Add/Update Scores
+                  </Button>
+                </div>
 
                 <Tabs defaultValue="class10" className="w-full">
                   <TabsList className="grid grid-cols-2 w-full">
