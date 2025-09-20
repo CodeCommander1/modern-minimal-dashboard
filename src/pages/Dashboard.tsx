@@ -232,6 +232,7 @@ export default function Dashboard() {
               title="SCHOLARSHIPS"
               description="Find scholarships"
               icon={Trophy}
+              onClick={() => navigate("/scholarships")}
             />
 
             {/* Study Materials */}
