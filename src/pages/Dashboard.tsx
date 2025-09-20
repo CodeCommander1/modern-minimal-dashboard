@@ -1106,7 +1106,7 @@ export default function Dashboard() {
               onClick={() => navigate("/career-path")}
             >
               <div className="space-y-3">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-auto pr-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pr-1">
                   {GOV_COLLEGES.map((c) => (
                     <span
                       key={c}
