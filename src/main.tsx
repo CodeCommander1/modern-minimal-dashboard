@@ -16,6 +16,7 @@ import TodoList from "@/pages/TodoList.tsx";
 import Scores from "@/pages/Scores.tsx";
 import CareerPath from "@/pages/CareerPath.tsx";
 import Scholarships from "@/pages/Scholarships.tsx";
+import CareerGoalPage from "@/pages/CareerGoal.tsx";
 import "./types/global.d.ts";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -59,6 +60,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/scores" element={<Scores />} />
             <Route path="/career-path" element={<CareerPath />} />
             <Route path="/scholarships" element={<Scholarships />} />
+            <Route path="/career-goal" element={<CareerGoalPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

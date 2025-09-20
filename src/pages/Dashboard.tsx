@@ -304,6 +304,11 @@ export default function Dashboard() {
               description="Your current career objective"
               icon={Target}
             >
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={() => navigate("/career-goal")}>
+                  Open Full View
+                </Button>
+              </div>
               <div className="space-y-3">
                 <div className="text-sm">
                   <span className="text-muted-foreground">Current:</span>{" "}
