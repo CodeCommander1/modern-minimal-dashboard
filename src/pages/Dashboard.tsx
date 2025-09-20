@@ -205,6 +205,7 @@ export default function Dashboard() {
               title="CAREER PATH"
               description="Explore career options"
               icon={GraduationCap}
+              onClick={() => navigate("/career-path")}
             >
               <div className="space-y-3">
                 <p className="text-sm font-medium">
