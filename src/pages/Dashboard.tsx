@@ -398,6 +398,45 @@ export default function Dashboard() {
     "oklch(70% 0.12 210)",
   ];
 
+  // Add a curated list of Government Colleges (India)
+  const GOV_COLLEGES: Array<string> = [
+    "IISc Bangalore",
+    "IIT Bombay",
+    "IIT Delhi",
+    "IIT Madras",
+    "IIT Kanpur",
+    "IIT Kharagpur",
+    "IIT Roorkee",
+    "IIT Guwahati",
+    "IIT (BHU) Varanasi",
+    "IIT Dhanbad (ISM)",
+    "IIT Hyderabad",
+    "IIT Gandhinagar",
+    "IIT Indore",
+    "IIT Ropar",
+    "IIT Mandi",
+    "IIT Jodhpur",
+    "IIT Patna",
+    "IIT Bhubaneswar",
+    "IIT Tirupati",
+    "IIT Palakkad",
+    "NIT Trichy",
+    "NIT Surathkal",
+    "NIT Warangal",
+    "NIT Rourkela",
+    "NIT Calicut",
+    "AIIMS Delhi",
+    "JNU",
+    "University of Delhi",
+    "BHU",
+    "AMU",
+    "ISI Kolkata",
+    "IIM Ahmedabad",
+    "IIM Bangalore",
+    "IIM Calcutta",
+    "IIM Lucknow",
+  ];
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -1066,10 +1105,22 @@ export default function Dashboard() {
               icon={GraduationCap}
               onClick={() => navigate("/career-path")}
             >
-              <div className="flex justify-end">
-                <Button size="sm" onClick={() => navigate("/career-path")}>
-                  Government Colleges
-                </Button>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-auto pr-1">
+                  {GOV_COLLEGES.map((c) => (
+                    <span
+                      key={c}
+                      className="text-xs rounded-md border bg-muted px-2 py-1"
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={() => navigate("/career-path")}>
+                    Government Colleges
+                  </Button>
+                </div>
               </div>
             </DashboardCard>
           </div>
