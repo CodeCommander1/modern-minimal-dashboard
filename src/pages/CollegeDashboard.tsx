@@ -58,14 +58,6 @@ export default function CollegeDashboard() {
     }
   }, [isLoading, isAuthenticated, navigate]);
 
-  if (isLoading || !isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
   // Vacant seats dialog state
   const [seatDialogOpen, setSeatDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -212,6 +204,15 @@ export default function CollegeDashboard() {
     } catch {
       toast.error("Failed to update profile");
     }
+  }
+
+  // ADD: Place the guard here so all hooks above run every render
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
   }
 
   return (
