@@ -20,6 +20,7 @@ import CareerGoalPage from "@/pages/CareerGoal.tsx";
 import PersonalInterestsPage from "@/pages/PersonalInterests.tsx";
 import AptitudeTestPage from "@/pages/AptitudeTest.tsx";
 import ProfilePage from "@/pages/Profile.tsx";
+import CollegeDashboard from "@/pages/CollegeDashboard.tsx";
 import "./types/global.d.ts";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -57,6 +58,7 @@ createRoot(document.getElementById("root")!).render(
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/college-dashboard" element={<CollegeDashboard />} />
             <Route path="/auth" element={<AuthPage redirectAfterAuth="/dashboard" />} />
             <Route path="/progress-tracker" element={<ProgressTracker />} />
             <Route path="/to-do-list" element={<TodoList />} />

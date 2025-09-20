@@ -49,8 +49,13 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      const redirect = redirectAfterAuth || "/";
-      navigate(redirect);
+      // Redirect based on role
+      const r =
+        (typeof window !== "undefined" &&
+          localStorage.getItem("userRole") === "college")
+          ? "/college-dashboard"
+          : redirectAfterAuth || "/";
+      navigate(r);
     }
   }, [authLoading, isAuthenticated, navigate, redirectAfterAuth]);
   const handleEmailSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -86,8 +91,8 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       try {
         localStorage.setItem("userRole", role);
       } catch {}
-      const redirect = redirectAfterAuth || "/";
-      navigate(redirect);
+      const r = role === "college" ? "/college-dashboard" : (redirectAfterAuth || "/");
+      navigate(r);
     } catch (error) {
       console.error("OTP verification error:", error);
 
@@ -108,8 +113,8 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       console.log("Attempting anonymous sign in...");
       await signIn("anonymous");
       console.log("Anonymous sign in successful");
-      const redirect = redirectAfterAuth || "/";
-      navigate(redirect);
+      const r = role === "college" ? "/college-dashboard" : (redirectAfterAuth || "/");
+      navigate(r);
     } catch (error) {
       console.error("Guest login error:", error);
       console.error("Error details:", JSON.stringify(error, null, 2));

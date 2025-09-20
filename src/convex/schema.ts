@@ -35,6 +35,11 @@ const schema = defineSchema(
       currentCareerGoal: v.optional(v.string()),
       interests: v.optional(v.array(v.string())),
       academicLevel: v.optional(v.string()),
+      
+      // College profile fields (optional)
+      collegeName: v.optional(v.string()),
+      collegeLogoUrl: v.optional(v.string()),
+      collegeContactInfo: v.optional(v.string()),
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
     // Progress tracking
@@ -121,6 +126,40 @@ const schema = defineSchema(
       .index("by_user", ["userId"])
       .index("by_branch", ["branch"])
       .index("by_lastDate", ["lastDate"]),
+
+    // Applications submitted to a college (owned by college user)
+    applications: defineTable({
+      userId: v.id("users"),
+      studentName: v.string(),
+      branch: v.string(),
+      meritRank: v.number(),
+      category: v.optional(v.string()), // e.g., General/OBC/SC/ST
+      contactEmail: v.optional(v.string()),
+      contactPhone: v.optional(v.string()),
+      notes: v.optional(v.string()),
+    })
+      .index("by_user", ["userId"])
+      .index("by_user_branch", ["userId", "branch"]),
+
+    // Merit list per branch (one per branch per college user ideally)
+    meritLists: defineTable({
+      userId: v.id("users"),
+      branch: v.string(),
+      details: v.string(), // free text / markdown
+      lastUpdated: v.number(),
+    })
+      .index("by_user", ["userId"])
+      .index("by_user_branch", ["userId", "branch"]),
+
+    // Announcements to students
+    announcements: defineTable({
+      userId: v.id("users"),
+      message: v.string(),
+      branch: v.optional(v.string()), // optional target branch (undefined = all)
+      createdAt: v.number(),
+    })
+      .index("by_user", ["userId"])
+      .index("by_user_branch", ["userId", "branch"]),
   },
   {
     schemaValidation: false,

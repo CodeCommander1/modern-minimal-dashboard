@@ -385,3 +385,181 @@ export const listOpenVacantSeats = query({
       .take(20);
   },
 });
+
+export const updateVacantSeat = mutation({
+  args: {
+    id: v.id("vacantSeats"),
+    collegeName: v.optional(v.string()),
+    branch: v.optional(v.string()),
+    seats: v.optional(v.number()),
+    lastDate: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== user._id) throw new Error("Not found or unauthorized");
+
+    const patch: Record<string, unknown> = {};
+    if (args.collegeName !== undefined) patch.collegeName = args.collegeName.trim();
+    if (args.branch !== undefined) patch.branch = args.branch.trim();
+    if (args.seats !== undefined) {
+      if (args.seats <= 0) throw new Error("Seats must be > 0");
+      patch.seats = Math.floor(args.seats);
+    }
+    if (args.lastDate !== undefined) {
+      if (Number.isNaN(args.lastDate) || args.lastDate <= 0) throw new Error("Invalid last date");
+      patch.lastDate = args.lastDate;
+    }
+    if (args.notes !== undefined) patch.notes = args.notes?.trim();
+    await ctx.db.patch(args.id, patch);
+    return "ok";
+  },
+});
+
+export const deleteVacantSeat = mutation({
+  args: { id: v.id("vacantSeats") },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== user._id) throw new Error("Not found or unauthorized");
+    await ctx.db.delete(args.id);
+    return "ok";
+  },
+});
+
+// Applications
+export const listApplications = query({
+  args: { branch: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
+    if (args.branch) {
+      return await ctx.db
+        .query("applications")
+        .withIndex("by_user_branch", (q) => q.eq("userId", user._id).eq("branch", args.branch!))
+        .order("asc")
+        .take(200);
+    }
+    return await ctx.db
+      .query("applications")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("asc")
+      .take(200);
+  },
+});
+
+export const seedApplications = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
+    const samples = [
+      { studentName: "Aarav Sharma", branch: "Computer Science", meritRank: 12, category: "General" },
+      { studentName: "Isha Verma", branch: "Mechanical", meritRank: 34, category: "OBC" },
+      { studentName: "Rohan Gupta", branch: "Commerce", meritRank: 18, category: "General" },
+      { studentName: "Neha Singh", branch: "Arts", meritRank: 45, category: "SC" },
+      { studentName: "Vikram Mehta", branch: "Computer Science", meritRank: 5, category: "General" },
+    ];
+    for (const s of samples) {
+      await ctx.db.insert("applications", {
+        userId: user._id,
+        studentName: s.studentName,
+        branch: s.branch,
+        meritRank: s.meritRank,
+        category: s.category,
+        contactEmail: undefined,
+        contactPhone: undefined,
+        notes: undefined,
+      });
+    }
+    return "ok";
+  },
+});
+
+// Merit lists
+export const upsertMeritList = mutation({
+  args: { branch: v.string(), details: v.string() },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
+    const existing = await ctx.db
+      .query("meritLists")
+      .withIndex("by_user_branch", (q) => q.eq("userId", user._id).eq("branch", args.branch))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, { details: args.details, lastUpdated: Date.now() });
+    } else {
+      await ctx.db.insert("meritLists", {
+        userId: user._id,
+        branch: args.branch,
+        details: args.details,
+        lastUpdated: Date.now(),
+      });
+    }
+    return "ok";
+  },
+});
+
+export const listMeritLists = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
+    return await ctx.db
+      .query("meritLists")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .collect();
+  },
+});
+
+// Announcements
+export const createAnnouncement = mutation({
+  args: { message: v.string(), branch: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
+    await ctx.db.insert("announcements", {
+      userId: user._id,
+      message: args.message.trim(),
+      branch: args.branch?.trim(),
+      createdAt: Date.now(),
+    });
+    return "ok";
+  },
+});
+
+export const listAnnouncements = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
+    return await ctx.db
+      .query("announcements")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .take(50);
+  },
+});
+
+// Update college profile
+export const updateCollegeProfile = mutation({
+  args: {
+    collegeName: v.optional(v.string()),
+    collegeLogoUrl: v.optional(v.string()),
+    collegeContactInfo: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
+    const patch: Record<string, unknown> = {};
+    if (args.collegeName !== undefined) patch.collegeName = args.collegeName.trim();
+    if (args.collegeLogoUrl !== undefined) patch.collegeLogoUrl = args.collegeLogoUrl.trim();
+    if (args.collegeContactInfo !== undefined) patch.collegeContactInfo = args.collegeContactInfo.trim();
+    await ctx.db.patch(user._id, patch);
+    return "ok";
+  },
+});
