@@ -121,6 +121,7 @@ export default function Dashboard() {
               title="TO DO LIST"
               description="Manage your tasks"
               icon={CheckSquare}
+              onClick={() => navigate("/to-do-list")}
             >
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary mb-1">
