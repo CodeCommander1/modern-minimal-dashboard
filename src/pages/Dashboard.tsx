@@ -70,6 +70,42 @@ export default function Dashboard() {
     "If you had a budget, how would you use it? * Buy lab equipment (Science) * Invest in stocks (Commerce) * Create an art exhibition (Arts)",
   ];
 
+  // --- ADD: Aptitude Test state and questions ---
+  const [aptitudeOpen, setAptitudeOpen] = useState(false);
+  const [aptitudeAnswers, setAptitudeAnswers] = useState<Record<number, number | null>>({});
+  const [aptitudeScore, setAptitudeScore] = useState<number | null>(null);
+
+  type MCQ = { q: string; options: Array<string>; correctIndex: number };
+  const APTITUDE_QUESTIONS: Array<MCQ> = [
+    // Quantitative Aptitude
+    { q: "1. What is the value of 25 × 12?", options: ["A) 250", "B) 300", "C) 325", "D) 275"], correctIndex: 1 },
+    { q: "2. A man buys an article for ₹500 and sells it at a profit of 20%. What is the selling price?", options: ["A) ₹600", "B) ₹550", "C) ₹520", "D) ₹700"], correctIndex: 0 },
+    { q: "3. If 12 pens cost ₹144, what is the cost of 1 pen?", options: ["A) ₹10", "B) ₹12", "C) ₹14", "D) ₹16"], correctIndex: 1 },
+    { q: "4. The average of 10, 20, 30, 40, 50 is:", options: ["A) 20", "B) 25", "C) 30", "D) 35"], correctIndex: 2 },
+    { q: "5. A train 120 m long runs at 60 km/h. Time taken to cross a pole?", options: ["A) 6 sec", "B) 7 sec", "C) 10 sec", "D) 12 sec"], correctIndex: 0 },
+
+    // Logical Reasoning
+    { q: "6. Find the next number: 2, 6, 12, 20, ?", options: ["A) 28", "B) 30", "C) 32", "D) 34"], correctIndex: 1 },
+    { q: "7. Which is the odd one out?", options: ["A) Rose", "B) Lotus", "C) Sunflower", "D) Mango"], correctIndex: 3 },
+    { q: "8. If CAT = 3120, DOG = 4157, then RAT = ?", options: ["A) 18120", "B) 18120", "C) 18120", "D) 18120"], correctIndex: 3 },
+    { q: "9. A is taller than B, B is taller than C, C is taller than D. Who is shortest?", options: ["A) A", "B) B", "C) C", "D) D"], correctIndex: 3 },
+    { q: "10. If in a certain code, PEN = 35, then BOOK = ?", options: ["A) 43", "B) 41", "C) 45", "D) 47"], correctIndex: 1 },
+
+    // Verbal Ability / Reasoning
+    { q: "11. Choose the synonym of Rapid:", options: ["A) Quick", "B) Slow", "C) Weak", "D) Normal"], correctIndex: 0 },
+    { q: "12. Choose the antonym of Difficult:", options: ["A) Easy", "B) Hard", "C) Tough", "D) Strong"], correctIndex: 0 },
+    { q: '13. Rearrange to form a correct sentence: "playing / children / the / are / garden / in / the"', options: ["A) The children are playing in the garden", "B) Playing children the in garden are", "C) Garden in are the playing children", "D) None"], correctIndex: 0 },
+    { q: "14. Fill in the blank: He ___ to school every day.", options: ["A) Go", "B) Going", "C) Goes", "D) Gone"], correctIndex: 2 },
+    { q: "15. Identify the correctly spelled word:", options: ["A) Recieve", "B) Receive", "C) Recive", "D) Receeve"], correctIndex: 1 },
+
+    // Mixed Aptitude
+    { q: "16. A clock shows 3:15. What is the angle between the hands?", options: ["A) 37.5°", "B) 45°", "C) 47.5°", "D) 55°"], correctIndex: 0 },
+    { q: "17. If 5x = 25, then x = ?", options: ["A) 2", "B) 3", "C) 4", "D) 5"], correctIndex: 3 },
+    { q: "18. The square root of 784 is:", options: ["A) 26", "B) 28", "C) 30", "D) 24"], correctIndex: 0 },
+    { q: "19. Which is not a prime number?", options: ["A) 11", "B) 13", "C) 15", "D) 17"], correctIndex: 2 },
+    { q: "20. If 4 pencils cost ₹20, how much will 10 pencils cost?", options: ["A) ₹40", "B) ₹45", "C) ₹50", "D) ₹55"], correctIndex: 2 },
+  ];
+
   function resetInterests() {
     setAnswers({});
     setResult(null);
@@ -87,6 +123,22 @@ export default function Dashboard() {
     const max = Math.max(s, c, a);
     const recommended = (max === s ? "Science" : max === c ? "Commerce" : "Arts") as "Science" | "Commerce" | "Arts";
     setResult({ science: s, commerce: c, arts: a, recommended });
+  }
+
+  function submitAptitude() {
+    let score = 0;
+    for (let i = 0; i < APTITUDE_QUESTIONS.length; i++) {
+      const sel = aptitudeAnswers[i];
+      if (sel !== null && sel !== undefined && sel === APTITUDE_QUESTIONS[i].correctIndex) {
+        score += 1;
+      }
+    }
+    setAptitudeScore(score);
+  }
+
+  function resetAptitude() {
+    setAptitudeAnswers({});
+    setAptitudeScore(null);
   }
 
   async function saveInterestsRecommendation() {
@@ -488,7 +540,25 @@ export default function Dashboard() {
               title="APTITUDE TEST"
               description="Assess your strengths"
               icon={Award}
-            />
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  {aptitudeScore !== null ? (
+                    <span>
+                      Last Score: <span className="font-medium">{aptitudeScore}/20</span> •{" "}
+                      <span className="font-medium">
+                        {aptitudeScore <= 7 ? "Beginner" : aptitudeScore <= 14 ? "Intermediate" : "Strong Aptitude"}
+                      </span>
+                    </span>
+                  ) : (
+                    <span>Answer 20 questions. Each correct answer = 1 point. Score shown out of 20.</span>
+                  )}
+                </div>
+                <Button size="sm" onClick={() => setAptitudeOpen(true)}>
+                  Open Test
+                </Button>
+              </div>
+            </DashboardCard>
 
             {/* Personal Interests & HOBBIES */}
             <DashboardCard
@@ -584,6 +654,73 @@ export default function Dashboard() {
                   <Button onClick={saveInterestsRecommendation} variant="default">
                     Save Recommendation
                   </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* ADD: Aptitude Test Modal */}
+            <Dialog open={aptitudeOpen} onOpenChange={setAptitudeOpen}>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Aptitude Test</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <p className="text-xs text-muted-foreground">
+                    Instructions for User: Answer the following 20 aptitude questions. Each correct answer gives you 1 point.
+                    At the end, your score will be shown out of 20.
+                  </p>
+
+                  {/* Questions */}
+                  <div className="grid gap-4">
+                    {APTITUDE_QUESTIONS.map((item, idx) => (
+                      <div key={idx} className="rounded-md border p-3">
+                        <p className="text-sm font-medium mb-2">{item.q}</p>
+                        <RadioGroup
+                          value={
+                            aptitudeAnswers[idx] === null || aptitudeAnswers[idx] === undefined
+                              ? undefined
+                              : String(aptitudeAnswers[idx])
+                          }
+                          onValueChange={(v) =>
+                            setAptitudeAnswers((prev) => ({
+                              ...prev,
+                              [idx]: Number(v),
+                            }))
+                          }
+                          className="grid sm:grid-cols-2 gap-2"
+                        >
+                          {item.options.map((opt, i) => (
+                            <label key={i} className="flex items-center gap-2 rounded-md border p-2">
+                              <RadioGroupItem value={String(i)} />
+                              <span className="text-sm">{opt}</span>
+                            </label>
+                          ))}
+                        </RadioGroup>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Result */}
+                  {aptitudeScore !== null && (
+                    <div className="rounded-md border p-3 text-sm">
+                      <p className="font-medium mb-1">Result</p>
+                      <p>
+                        Score: <span className="font-semibold">{aptitudeScore}/20</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Level:{" "}
+                        {aptitudeScore <= 7 ? "Beginner" : aptitudeScore <= 14 ? "Intermediate" : "Strong Aptitude"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <DialogFooter className="flex items-center justify-between gap-2">
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={resetAptitude}>Reset</Button>
+                    <Button onClick={submitAptitude}>Submit</Button>
+                  </div>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
