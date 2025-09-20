@@ -434,9 +434,6 @@ export default function CollegeDashboard() {
                   <Textarea placeholder="Type an announcement..." value={annMessage} onChange={(e) => setAnnMessage(e.target.value)} />
                 </div>
               </div>
-              <div className="flex justify-end">
-                <Button onClick={handleCreateAnnouncement}>Send Announcement</Button>
-              </div>
               <div className="mt-4">
                 <p className="text-sm font-medium mb-2">Recent Announcements</p>
                 <div className="space-y-2 max-h-[300px] overflow-auto pr-1">

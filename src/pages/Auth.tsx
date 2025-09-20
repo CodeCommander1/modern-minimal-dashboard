@@ -174,45 +174,6 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                 </CardDescription>
               </CardHeader>
 
-              {/* College admin instructions panel */}
-              {role === "college" && (
-                <div className="px-6">
-                  <div className="rounded-lg border bg-muted/30 p-4 mb-4 text-left">
-                    <p className="text-sm font-semibold mb-2">
-                      Instructions for College Admin
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Please enter the details of vacant seats for each branch. This information will be visible to students applying through the merit list.
-                    </p>
-
-                    <div className="space-y-2 text-xs">
-                      <p className="font-medium">Required Inputs:</p>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>College Name</li>
-                        <li>Branch/Department (e.g., Computer Science, Mechanical, Commerce, Arts, etc.)</li>
-                        <li>Number of Vacant Seats</li>
-                        <li>Last Date to Apply (DD/MM/YYYY)</li>
-                        <li>Additional Notes (optional) – e.g., reservation details, eligibility, counseling rounds</li>
-                      </ul>
-                      <p className="font-medium mt-2">Example Input Format:</p>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>College Name: XYZ Institute of Technology</li>
-                        <li>Branch: Computer Science Engineering</li>
-                        <li>Vacant Seats: 12</li>
-                        <li>Last Date to Apply: 30/09/2025</li>
-                        <li>Notes: Merit list cutoff will be displayed on 25/09/2025</li>
-                      </ul>
-                      <p className="font-medium mt-2">System Behavior:</p>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Each entry will be stored branch-wise.</li>
-                        <li>Students will see available seats and deadlines in real-time.</li>
-                        <li>Once the last date is over, the seat entry will auto-expire (marked as closed).</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <form onSubmit={handleEmailSubmit}>
                 <CardContent>
                   
