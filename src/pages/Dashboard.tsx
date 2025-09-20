@@ -507,7 +507,7 @@ export default function Dashboard() {
                     <span>Take a quick questionnaire to get a recommended stream.</span>
                   )}
                 </div>
-                <Button size="sm" onClick={() => setInterestsOpen(true)}>
+                <Button size="sm" onClick={() => navigate("/personal-interests")}>
                   Open Questionnaire
                 </Button>
               </div>
