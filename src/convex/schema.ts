@@ -30,14 +30,75 @@ const schema = defineSchema(
       isAnonymous: v.optional(v.boolean()), // is the user anonymous. do not remove
 
       role: v.optional(roleValidator), // role of the user. do not remove
+      
+      // EduGuide specific fields
+      currentCareerGoal: v.optional(v.string()),
+      interests: v.optional(v.array(v.string())),
+      academicLevel: v.optional(v.string()),
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // add other tables here
+    // Progress tracking
+    progress: defineTable({
+      userId: v.id("users"),
+      subject: v.string(),
+      currentLevel: v.number(),
+      totalLevels: v.number(),
+      completedMilestones: v.array(v.string()),
+      lastUpdated: v.number(),
+    }).index("by_user", ["userId"]),
 
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    // Tasks/To-do items
+    tasks: defineTable({
+      userId: v.id("users"),
+      title: v.string(),
+      description: v.optional(v.string()),
+      completed: v.boolean(),
+      dueDate: v.optional(v.number()),
+      priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+      category: v.optional(v.string()),
+    }).index("by_user", ["userId"]).index("by_user_completed", ["userId", "completed"]),
+
+    // Goals
+    goals: defineTable({
+      userId: v.id("users"),
+      title: v.string(),
+      description: v.optional(v.string()),
+      targetDate: v.optional(v.number()),
+      completed: v.boolean(),
+      progress: v.number(), // 0-100
+      category: v.string(),
+    }).index("by_user", ["userId"]).index("by_user_completed", ["userId", "completed"]),
+
+    // Academic scores
+    scores: defineTable({
+      userId: v.id("users"),
+      subject: v.string(),
+      score: v.number(),
+      maxScore: v.number(),
+      testDate: v.number(),
+      testType: v.string(), // "quiz", "exam", "assignment", etc.
+    }).index("by_user", ["userId"]).index("by_user_subject", ["userId", "subject"]),
+
+    // Study materials
+    studyMaterials: defineTable({
+      userId: v.id("users"),
+      title: v.string(),
+      description: v.optional(v.string()),
+      url: v.string(),
+      category: v.string(),
+      tags: v.optional(v.array(v.string())),
+    }).index("by_user", ["userId"]).index("by_category", ["category"]),
+
+    // Scholarships
+    scholarships: defineTable({
+      title: v.string(),
+      description: v.string(),
+      amount: v.number(),
+      deadline: v.number(),
+      eligibility: v.array(v.string()),
+      applicationUrl: v.string(),
+      category: v.string(),
+    }).index("by_deadline", ["deadline"]).index("by_category", ["category"]),
   },
   {
     schemaValidation: false,
