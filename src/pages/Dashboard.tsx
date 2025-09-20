@@ -26,6 +26,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function Dashboard() {
   const { isLoading, isAuthenticated, user } = useAuth();
@@ -42,6 +44,74 @@ export default function Dashboard() {
   const [improvement, setImprovement] = useState<string>("");
   const [smartTarget, setSmartTarget] = useState<string>("75");
   const [timelineMonths, setTimelineMonths] = useState<string>("3");
+
+  // Interests & Hobbies modal state
+  const [interestsOpen, setInterestsOpen] = useState(false);
+  const [answers, setAnswers] = useState<Record<number, "Science" | "Commerce" | "Arts" | null>>({});
+  const [result, setResult] = useState<{ science: number; commerce: number; arts: number; recommended: "Science" | "Commerce" | "Arts" } | null>(null);
+  const saveInterests = useMutation(api.dashboard.saveInterestsResult);
+
+  // 20 questions (one choice each)
+  const QUESTIONS: Array<string> = [
+    "Which activity excites you more?",
+    "You are asked to join a club in school. Which one will you choose?",
+    "What do you enjoy reading about the most?",
+    "Which subject do you find naturally interesting?",
+    "If given a project, what would you prefer to work on?",
+    "Which career sounds exciting to you?",
+    "Which type of movie do you enjoy more?",
+    "How do you prefer solving problems?",
+    "Which extracurricular activity attracts you?",
+    "What do you like in newspapers/magazines?",
+    "What motivates you the most?",
+    "If you had to research a topic, what would it be?",
+    "What kind of puzzles do you enjoy?",
+    "Which TV show would you prefer?",
+    "What excites you in real life?",
+    "If you could interview someone, who would it be?",
+    "What do you like doing in free time?",
+    "Which invention impresses you the most?",
+    "If given a budget, how would you use it?",
+    "What would make you happiest?",
+  ];
+
+  function resetInterests() {
+    setAnswers({});
+    setResult(null);
+  }
+
+  function submitInterests() {
+    // Count selections; each counts for 5 points to make total out of 100
+    let s = 0, c = 0, a = 0;
+    for (let i = 0; i < QUESTIONS.length; i++) {
+      const pick = answers[i] || null;
+      if (pick === "Science") s += 5;
+      if (pick === "Commerce") c += 5;
+      if (pick === "Arts") a += 5;
+    }
+    const max = Math.max(s, c, a);
+    const recommended = (max === s ? "Science" : max === c ? "Commerce" : "Arts") as "Science" | "Commerce" | "Arts";
+    setResult({ science: s, commerce: c, arts: a, recommended });
+  }
+
+  async function saveInterestsRecommendation() {
+    if (!result) {
+      toast.error("Please submit the questionnaire first");
+      return;
+    }
+    try {
+      await saveInterests({
+        science: result.science,
+        commerce: result.commerce,
+        arts: result.arts,
+        recommended: result.recommended,
+      });
+      toast.success("Recommendation saved to your profile");
+      setInterestsOpen(false);
+    } catch {
+      toast.error("Failed to save recommendation");
+    }
+  }
 
   useEffect(() => {
     setGoalInput(dashboardData?.user?.currentCareerGoal ?? "");
@@ -425,12 +495,100 @@ export default function Dashboard() {
               icon={Award}
             />
 
-            {/* Personal Interests */}
+            {/* Personal Interests & HOBBIES */}
             <DashboardCard
               title="PERSONAL INTERESTS & HOBBIES"
               description="Manage your interests and hobbies"
               icon={Heart}
-            />
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  {result ? (
+                    <span>
+                      Primary Field: <span className="font-medium">{result.recommended}</span> •
+                      Scores — S: {result.science}, C: {result.commerce}, A: {result.arts}
+                    </span>
+                  ) : (
+                    <span>Take a quick questionnaire to get a recommended stream.</span>
+                  )}
+                </div>
+                <Button size="sm" onClick={() => setInterestsOpen(true)}>
+                  Open Questionnaire
+                </Button>
+              </div>
+            </DashboardCard>
+
+            {/* Interests & Hobbies Modal */}
+            <Dialog open={interestsOpen} onOpenChange={setInterestsOpen}>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Interests & Hobbies Questionnaire</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <p className="text-xs text-muted-foreground">
+                    Choose one option per question. Submit to see your recommended stream. You can also save it to your profile.
+                  </p>
+
+                  <div className="grid gap-4">
+                    {QUESTIONS.map((q, idx) => (
+                      <div key={idx} className="rounded-md border p-3">
+                        <p className="text-sm font-medium mb-2">
+                          {idx + 1}. {q}
+                        </p>
+                        <RadioGroup
+                          value={answers[idx] ?? undefined}
+                          onValueChange={(v) =>
+                            setAnswers((prev) => ({ ...prev, [idx]: v as "Science" | "Commerce" | "Arts" }))
+                          }
+                          className="grid sm:grid-cols-3 gap-2"
+                        >
+                          <label className="flex items-center gap-2 rounded-md border p-2">
+                            <RadioGroupItem value="Science" />
+                            <span className="text-sm">Science</span>
+                          </label>
+                          <label className="flex items-center gap-2 rounded-md border p-2">
+                            <RadioGroupItem value="Commerce" />
+                            <span className="text-sm">Commerce</span>
+                          </label>
+                          <label className="flex items-center gap-2 rounded-md border p-2">
+                            <RadioGroupItem value="Arts" />
+                            <span className="text-sm">Arts</span>
+                          </label>
+                        </RadioGroup>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Output */}
+                  {result && (
+                    <div className="rounded-md border p-3 text-sm">
+                      <p className="font-medium mb-1">Result</p>
+                      <p>• Science: {result.science} points</p>
+                      <p>• Commerce: {result.commerce} points</p>
+                      <p>• Arts: {result.arts} points</p>
+                      <p className="mt-2">
+                        Recommendation: <span className="font-semibold">Primary Field: {result.recommended}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Suggested Courses: {result.recommended === "Science" ? "B.Sc., B.Tech, MBBS" : result.recommended === "Commerce" ? "B.Com, BBA, CA/CS/CMA" : "BA, B.Des, BJMC"} •
+                        Career Paths: {result.recommended === "Science" ? "Engineer, Doctor, Scientist, Data Analyst" : result.recommended === "Commerce" ? "Entrepreneur, Banker, Accountant" : "Writer, Journalist, Designer"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <DialogFooter className="flex items-center justify-between gap-2">
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={resetInterests}>Reset</Button>
+                    <Button onClick={submitInterests}>Submit</Button>
+                  </div>
+                  <Button onClick={saveInterestsRecommendation} variant="default">
+                    Save Recommendation
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </motion.div>
       </main>

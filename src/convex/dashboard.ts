@@ -301,3 +301,29 @@ export const setCareerGoal = mutation({
     return "ok";
   },
 });
+
+// Add: Save Interests & Hobbies questionnaire result
+export const saveInterestsResult = mutation({
+  args: {
+    science: v.number(),
+    commerce: v.number(),
+    arts: v.number(),
+    recommended: v.union(v.literal("Science"), v.literal("Commerce"), v.literal("Arts")),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
+
+    const summary = [
+      `Science: ${args.science} points`,
+      `Commerce: ${args.commerce} points`,
+      `Arts: ${args.arts} points`,
+      `Recommended: ${args.recommended}`,
+    ];
+
+    await ctx.db.patch(user._id, {
+      interests: summary,
+    });
+    return "saved";
+  },
+});
