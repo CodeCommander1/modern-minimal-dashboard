@@ -543,15 +543,15 @@ export default function Dashboard() {
                         >
                           <label className="flex items-center gap-2 rounded-md border p-2">
                             <RadioGroupItem value="Science" />
-                            <span className="text-sm">Science</span>
+                            <span className="text-sm">Option A</span>
                           </label>
                           <label className="flex items-center gap-2 rounded-md border p-2">
                             <RadioGroupItem value="Commerce" />
-                            <span className="text-sm">Commerce</span>
+                            <span className="text-sm">Option B</span>
                           </label>
                           <label className="flex items-center gap-2 rounded-md border p-2">
                             <RadioGroupItem value="Arts" />
-                            <span className="text-sm">Arts</span>
+                            <span className="text-sm">Option C</span>
                           </label>
                         </RadioGroup>
                       </div>
