@@ -24,6 +24,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Dashboard() {
   const { isLoading, isAuthenticated, user } = useAuth();
@@ -34,6 +36,12 @@ export default function Dashboard() {
 
   // Local state for career goal input
   const [goalInput, setGoalInput] = useState<string>("");
+
+  // Guided goal setting local state (stream, improvement, SMART target, timeline)
+  const [guidedStream, setGuidedStream] = useState<"Science" | "Commerce" | "Arts">("Science");
+  const [improvement, setImprovement] = useState<string>("");
+  const [smartTarget, setSmartTarget] = useState<string>("75");
+  const [timelineMonths, setTimelineMonths] = useState<string>("3");
 
   useEffect(() => {
     setGoalInput(dashboardData?.user?.currentCareerGoal ?? "");
@@ -65,6 +73,25 @@ export default function Dashboard() {
       toast.success("Career goal updated");
     } catch {
       toast.error("Failed to update career goal");
+    }
+  };
+
+  // Save SMART goal (formats a clear, guided goal string)
+  const handleSaveSmartGoal = async () => {
+    try {
+      const imp = improvement.trim();
+      if (!imp) {
+        toast.error("Describe what you want to improve");
+        return;
+      }
+      const target = Math.max(1, Math.min(100, Number(smartTarget || "0")));
+      const months = Math.max(1, Number(timelineMonths || "1"));
+      const formatted = `${imp} • Stream: ${guidedStream} • SMART Target: ${target}% in ${months} month${months > 1 ? "s" : ""}`;
+      await setCareerGoal({ currentCareerGoal: formatted });
+      setGoalInput(formatted);
+      toast.success("SMART goal saved");
+    } catch {
+      toast.error("Failed to save SMART goal");
     }
   };
 
@@ -298,6 +325,77 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground">
                   Tip: Be specific. Example: "MBBS → General Physician" or "B.Tech CSE → SDE".
                 </p>
+
+                {/* Guided Goal Setting (compact) */}
+                <div className="mt-4 rounded-lg border p-4 space-y-4">
+                  <p className="text-sm font-medium">Guided Goal Setting</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">Choose Stream</label>
+                      <Select value={guidedStream} onValueChange={(v) => setGuidedStream(v as any)}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select Stream" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Science">Science</SelectItem>
+                          <SelectItem value="Commerce">Commerce</SelectItem>
+                          <SelectItem value="Arts">Arts</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="text-xs text-muted-foreground">What do you want to improve?</label>
+                      <Input
+                        placeholder='e.g., "Improve Science basics", "Work on Accountancy"'
+                        value={improvement}
+                        onChange={(e) => setImprovement(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Tracker Output</label>
+                    <Input
+                      disabled
+                      value="Add some scores and complete the Interests questionnaire to see tailored guidance."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Goal Suggestions</p>
+                    <ul className="list-disc pl-5 text-xs text-muted-foreground space-y-1">
+                      <li>Join coaching / online resources</li>
+                      <li>Weekly progress updates</li>
+                      <li>Subject-wise improvement checklist</li>
+                    </ul>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">SMART Target (%)</label>
+                      <Input
+                        inputMode="numeric"
+                        value={smartTarget}
+                        onChange={(e) => setSmartTarget(e.target.value.replace(/[^\d]/g, ""))}
+                        placeholder="75"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">Timeline (months)</label>
+                      <Input
+                        inputMode="numeric"
+                        value={timelineMonths}
+                        onChange={(e) => setTimelineMonths(e.target.value.replace(/[^\d]/g, ""))}
+                        placeholder="3"
+                      />
+                    </div>
+                    <Button className="w-full sm:w-auto" onClick={handleSaveSmartGoal}>
+                      Save SMART Goal
+                    </Button>
+                  </div>
+                </div>
               </div>
             </DashboardCard>
 
