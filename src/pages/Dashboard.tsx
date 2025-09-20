@@ -46,6 +46,45 @@ export default function Dashboard() {
     }
   };
 
+  // Add lightweight college recommendations based on the user's current career goal
+  const currentGoal = dashboardData?.user?.currentCareerGoal ?? "";
+  const collegesMap: Record<string, Array<string>> = {
+    Engineer: ["IITs", "NITs", "BITS"],
+    "Computer Science": ["IITs", "IIITs", "Private Universities"],
+    "Data Science": ["IITs", "IIITs", "Private Universities"],
+    Doctor: ["AIIMS", "CMC Vellore", "JIPMER"],
+    Architecture: ["SPA Delhi", "IIT Roorkee", "CEPT"],
+    Aviation: ["Indigo Cadet Program", "IGRUA"],
+    Biotechnology: ["IITs", "IISc", "Amity"],
+    "Hotel Management": ["IHM", "Private Hospitality Schools"],
+    "Investment Banking": ["Top MBA Schools", "CFA Route"],
+    "Logistics": ["IIMs (PG)", "University Programs"],
+    "BBA": ["NMIMS", "Christ University", "IPU Colleges"],
+    "BA (Economics)": ["Delhi School of Economics", "St. Xavier's"],
+    "Banking & Insurance": ["Public Universities", "Private Colleges"],
+    "Company Secretary": ["ICSI (professional route)"],
+    "Cost & Management Accountant": ["ICMAI (professional route)"],
+    "Social Work": ["TISS (PG focus)", "Public Universities"],
+    Sociology: ["DU", "State Universities"],
+    "B.Com": ["SRCC", "Loyola", "Christ University"],
+    Design: ["NID", "IIT IDC", "Pearl Academy"],
+    Education: ["DU", "State Universities"],
+    "Fine Arts": ["JJ School of Art", "DU Colleges"],
+    "Foreign Languages": ["JNU (CSE)", "DU", "Private Institutes"],
+    History: ["DU", "AMU", "Public Universities"],
+    Journalism: ["IIMC", "Symbiosis", "DU"],
+    Law: ["NLUs", "Symbiosis Law", "DU"],
+    "Political Science": ["DU", "JNU (PG)", "Public Universities"],
+    Psychology: ["DU", "Christ University"],
+  };
+  function getRecommendedColleges(goal: string): Array<string> {
+    const key = Object.keys(collegesMap).find((k) =>
+      goal.toLowerCase().includes(k.toLowerCase()),
+    );
+    return key ? collegesMap[key] : ["DU", "State Universities", "Private Colleges"];
+  }
+  const recommendedColleges = getRecommendedColleges(currentGoal);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -167,10 +206,23 @@ export default function Dashboard() {
               description="Explore career options"
               icon={GraduationCap}
             >
-              <div className="text-center">
+              <div className="space-y-3">
                 <p className="text-sm font-medium">
                   {dashboardData?.user?.currentCareerGoal || "Set your career goal"}
                 </p>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Recommended Colleges</p>
+                  <div className="flex flex-wrap gap-2">
+                    {recommendedColleges.map((c) => (
+                      <span
+                        key={c}
+                        className="text-xs rounded-md border bg-muted px-2 py-1"
+                      >
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </DashboardCard>
 
