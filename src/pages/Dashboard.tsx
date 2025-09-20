@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -30,6 +30,14 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const dashboardData = useQuery(api.dashboard.getDashboardOverview);
   const seedData = useMutation(api.seedData.seedDashboardData);
+  const setCareerGoal = useMutation(api.dashboard.setCareerGoal);
+
+  // Local state for career goal input
+  const [goalInput, setGoalInput] = useState<string>("");
+
+  useEffect(() => {
+    setGoalInput(dashboardData?.user?.currentCareerGoal ?? "");
+  }, [dashboardData?.user?.currentCareerGoal]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -43,6 +51,20 @@ export default function Dashboard() {
       toast.success("Sample data added to your dashboard!");
     } catch (error) {
       toast.error("Failed to add sample data");
+    }
+  };
+
+  const handleSaveGoal = async () => {
+    try {
+      const value = goalInput.trim();
+      if (!value) {
+        toast.error("Please enter a career goal");
+        return;
+      }
+      await setCareerGoal({ currentCareerGoal: value });
+      toast.success("Career goal updated");
+    } catch {
+      toast.error("Failed to update career goal");
     }
   };
 
@@ -254,7 +276,30 @@ export default function Dashboard() {
               title="CAREER GOAL"
               description="Your current career objective"
               icon={Target}
-            />
+            >
+              <div className="space-y-3">
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Current:</span>{" "}
+                  <span className="font-medium">
+                    {dashboardData?.user?.currentCareerGoal || "Not set"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="e.g., Become a Software Engineer"
+                    value={goalInput}
+                    onChange={(e) => setGoalInput(e.target.value)}
+                  />
+                  <Button size="sm" onClick={handleSaveGoal}>
+                    Save
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Tip: Be specific. Example: "MBBS → General Physician" or "B.Tech CSE → SDE".
+                </p>
+              </div>
+            </DashboardCard>
 
             {/* Pie Chart */}
             <DashboardCard

@@ -291,3 +291,13 @@ export const saveScoresBulk = mutation({
     return "Saved";
   },
 });
+
+export const setCareerGoal = mutation({
+  args: { currentCareerGoal: v.string() },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
+    await ctx.db.patch(user._id, { currentCareerGoal: args.currentCareerGoal.trim() });
+    return "ok";
+  },
+});
