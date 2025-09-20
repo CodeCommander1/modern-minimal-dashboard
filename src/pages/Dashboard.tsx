@@ -53,26 +53,21 @@ export default function Dashboard() {
 
   // 20 questions (one choice each)
   const QUESTIONS: Array<string> = [
-    "Which activity excites you more?",
-    "You are asked to join a club in school. Which one will you choose?",
-    "What do you enjoy reading about the most?",
-    "Which subject do you find naturally interesting?",
-    "If given a project, what would you prefer to work on?",
-    "Which career sounds exciting to you?",
-    "Which type of movie do you enjoy more?",
-    "How do you prefer solving problems?",
-    "Which extracurricular activity attracts you?",
-    "What do you like in newspapers/magazines?",
-    "What motivates you the most?",
-    "If you had to research a topic, what would it be?",
-    "What kind of puzzles do you enjoy?",
-    "Which TV show would you prefer?",
-    "What excites you in real life?",
-    "If you could interview someone, who would it be?",
-    "What do you like doing in free time?",
-    "Which invention impresses you the most?",
-    "If given a budget, how would you use it?",
-    "What would make you happiest?",
+    "Which activity excites you more? * Doing experiments in a lab (Science) * Calculating profits and losses (Commerce) * Writing a poem or story (Arts)",
+    "You are asked to join a school club. Which one will you choose? * Robotics Club (Science) * Business/Finance Club (Commerce) * Drama or Painting Club (Arts)",
+    "What do you enjoy reading most? * Space, medicine, or technology (Science) * Stock market, trade, and money (Commerce) * History, literature, or philosophy (Arts)",
+    "Which subject do you naturally find interesting? * Physics/Chemistry/Biology (Science) * Mathematics/Economics/Accounts (Commerce) * English/History/Political Science (Arts)",
+    "If given a project, what would you prefer? * Building a science model (Science) * Preparing a business plan (Commerce) * Creating an art piece/documentary (Arts)",
+    "Which career sounds exciting? * Doctor/Engineer/Scientist (Science) * Entrepreneur/Banker/CA (Commerce) * Writer/Journalist/Designer (Arts)",
+    "Which type of movie do you enjoy more? * Sci-fi/medical thrillers (Science) * Business/financial dramas (Commerce) * Historical/creative films (Arts)",
+    "How do you like solving problems? * By experimenting and testing (Science) * By analyzing numbers and logic (Commerce) * By expressing ideas creatively (Arts)",
+    "Which extracurricular activity attracts you? * Science quiz (Science) * Debate on economy (Commerce) * Theater/Art competition (Arts)",
+    "What motivates you most? * Discovering new knowledge (Science) * Earning and managing money (Commerce) * Expressing creativity (Arts)",
+    "If you had to research a topic, what would it be? * Renewable energy (Science) * Growth of Indian economy (Commerce) * Ancient civilizations (Arts)",
+    "Which puzzle do you enjoy? * Logical/scientific puzzle (Science) * Numerical/profit-loss puzzle (Commerce) * Word/creative puzzle (Arts)",
+    "Which TV show do you prefer? * Discovery/Science Channel (Science) * Shark Tank/Business shows (Commerce) * National Geographic History/Art shows (Arts)",
+    "What excites you in real life? * Inventions and new technology (Science) * Business startups and markets (Commerce) * Museums, books, and culture (Arts)",
+    "If you had a budget, how would you use it? * Buy lab equipment (Science) * Invest in stocks (Commerce) * Create an art exhibition (Arts)",
   ];
 
   function resetInterests() {
@@ -81,13 +76,13 @@ export default function Dashboard() {
   }
 
   function submitInterests() {
-    // Count selections; each counts for 5 points to make total out of 100
+    // Count selections; each chosen option adds 1 point to its stream
     let s = 0, c = 0, a = 0;
     for (let i = 0; i < QUESTIONS.length; i++) {
       const pick = answers[i] || null;
-      if (pick === "Science") s += 5;
-      if (pick === "Commerce") c += 5;
-      if (pick === "Arts") a += 5;
+      if (pick === "Science") s += 1;
+      if (pick === "Commerce") c += 1;
+      if (pick === "Arts") a += 1;
     }
     const max = Math.max(s, c, a);
     const recommended = (max === s ? "Science" : max === c ? "Commerce" : "Arts") as "Science" | "Commerce" | "Arts";
@@ -527,7 +522,10 @@ export default function Dashboard() {
 
                 <div className="space-y-4">
                   <p className="text-xs text-muted-foreground">
-                    Choose one option per question. Submit to see your recommended stream. You can also save it to your profile.
+                    Instructions: Choose one option per question. Your answers will help us recommend whether your interest is in Science, Commerce, or Arts.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Scoring Rule: Each selected option adds 1 point to the respective stream. The stream with the highest score becomes your recommended interest area.
                   </p>
 
                   <div className="grid gap-4">
