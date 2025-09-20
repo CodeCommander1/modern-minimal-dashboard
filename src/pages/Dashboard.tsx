@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Dashboard() {
   const { isLoading, isAuthenticated, user } = useAuth();
@@ -105,6 +106,74 @@ export default function Dashboard() {
     { q: "19. Which is not a prime number?", options: ["A) 11", "B) 13", "C) 15", "D) 17"], correctIndex: 2 },
     { q: "20. If 4 pencils cost ₹20, how much will 10 pencils cost?", options: ["A) ₹40", "B) ₹45", "C) ₹50", "D) ₹55"], correctIndex: 2 },
   ];
+
+  // Add: College role detection
+  const [isCollege, setIsCollege] = useState(false);
+  useEffect(() => {
+    try {
+      setIsCollege(localStorage.getItem("userRole") === "college");
+    } catch {}
+  }, []);
+
+  // Add: Vacant Seats hooks
+  const createVacantSeat = useMutation(api.dashboard.createVacantSeat);
+  const mySeats = useQuery(api.dashboard.listMyVacantSeats);
+  const openSeats = useQuery(api.dashboard.listOpenVacantSeats);
+
+  // Add: Vacant Seats dialog state
+  const [seatDialogOpen, setSeatDialogOpen] = useState(false);
+  const [vsCollegeName, setVsCollegeName] = useState("");
+  const [vsBranch, setVsBranch] = useState("");
+  const [vsSeats, setVsSeats] = useState<string>("");
+  const [vsLastDate, setVsLastDate] = useState(""); // DD/MM/YYYY
+  const [vsNotes, setVsNotes] = useState("");
+
+  function parseDdMmYyyyToMs(input: string): number | null {
+    const m = input.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) return null;
+    const dd = Number(m[1]);
+    const mm = Number(m[2]) - 1;
+    const yyyy = Number(m[3]);
+    const d = new Date(yyyy, mm, dd, 23, 59, 59, 999);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.getTime();
+  }
+
+  async function handleCreateSeat() {
+    const seatsNum = Number(vsSeats);
+    const lastMs = parseDdMmYyyyToMs(vsLastDate);
+    if (!vsCollegeName.trim() || !vsBranch.trim()) {
+      toast.error("College name and Branch are required");
+      return;
+    }
+    if (!Number.isFinite(seatsNum) || seatsNum <= 0) {
+      toast.error("Enter a valid number of seats");
+      return;
+    }
+    if (lastMs === null) {
+      toast.error("Enter last date as DD/MM/YYYY");
+      return;
+    }
+
+    try {
+      await createVacantSeat({
+        collegeName: vsCollegeName,
+        branch: vsBranch,
+        seats: Math.floor(seatsNum),
+        lastDate: lastMs,
+        notes: vsNotes || undefined,
+      });
+      toast.success("Vacant seat entry added");
+      setSeatDialogOpen(false);
+      setVsCollegeName("");
+      setVsBranch("");
+      setVsSeats("");
+      setVsLastDate("");
+      setVsNotes("");
+    } catch (e) {
+      toast.error("Failed to add entry");
+    }
+  }
 
   function resetInterests() {
     setAnswers({});
@@ -724,6 +793,148 @@ export default function Dashboard() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {/* Add: College Admin Vacant Seats */}
+            {isCollege && (
+              <DashboardCard
+                title="VACANT SEATS (ADMIN)"
+                description="Publish seats by branch"
+                icon={ClipboardList}
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <p className="text-sm text-muted-foreground">
+                    Add entries visible to students in real-time
+                  </p>
+                  <Button size="sm" onClick={() => setSeatDialogOpen(true)}>
+                    Add Entry
+                  </Button>
+                </div>
+                <div className="space-y-2 max-h-48 overflow-auto pr-1">
+                  {(mySeats ?? []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No entries yet</p>
+                  ) : (
+                    (mySeats ?? []).slice(0, 5).map((s) => {
+                      const closed = s.lastDate < Date.now();
+                      return (
+                        <div key={s._id} className="text-sm rounded-md border p-2">
+                          <div className="flex justify-between">
+                            <span className="font-medium">{s.branch}</span>
+                            <span className={`text-xs ${closed ? "text-red-500" : "text-green-600"}`}>
+                              {closed ? "Closed" : "Open"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{s.collegeName}</p>
+                          <div className="flex justify-between text-xs mt-1">
+                            <span>Seats: {s.seats}</span>
+                            <span>
+                              Last Date: {new Date(s.lastDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Dialog for creating entry */}
+                <Dialog open={seatDialogOpen} onOpenChange={setSeatDialogOpen}>
+                  <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle>Add Vacant Seats</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">College Name</label>
+                        <Input
+                          value={vsCollegeName}
+                          onChange={(e) => setVsCollegeName(e.target.value)}
+                          placeholder="XYZ Institute of Technology"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Branch/Department</label>
+                        <Input
+                          value={vsBranch}
+                          onChange={(e) => setVsBranch(e.target.value)}
+                          placeholder="Computer Science, Mechanical, Commerce, Arts..."
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Vacant Seats</label>
+                          <Input
+                            inputMode="numeric"
+                            value={vsSeats}
+                            onChange={(e) =>
+                              setVsSeats(e.target.value.replace(/[^\d]/g, ""))
+                            }
+                            placeholder="12"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Last Date (DD/MM/YYYY)</label>
+                          <Input
+                            value={vsLastDate}
+                            onChange={(e) => setVsLastDate(e.target.value)}
+                            placeholder="30/09/2025"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Additional Notes (optional)</label>
+                        <Textarea
+                          value={vsNotes}
+                          onChange={(e) => setVsNotes(e.target.value)}
+                          placeholder="Reservation details, eligibility, counseling rounds..."
+                        />
+                      </div>
+                    </div>
+
+                    <DialogFooter className="flex justify-end">
+                      <Button variant="outline" onClick={() => setSeatDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleCreateSeat}>Save</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </DashboardCard>
+            )}
+
+            {/* Add: Student-facing available seats */}
+            {!isCollege && (
+              <DashboardCard
+                title="AVAILABLE COLLEGE SEATS"
+                description="Open seats and deadlines"
+                icon={GraduationCap}
+              >
+                <div className="space-y-2 max-h-48 overflow-auto pr-1">
+                  {(openSeats ?? []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No open seats right now</p>
+                  ) : (
+                    (openSeats ?? []).slice(0, 6).map((s) => (
+                      <div key={s._id} className="text-sm rounded-md border p-2">
+                        <div className="flex justify-between">
+                          <span className="font-medium">{s.branch}</span>
+                          <span className="text-xs text-green-600">Open</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{s.collegeName}</p>
+                        <div className="flex justify-between text-xs mt-1">
+                          <span>Seats: {s.seats}</span>
+                          <span>Apply by: {new Date(s.lastDate).toLocaleDateString()}</span>
+                        </div>
+                        {s.notes && (
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            {s.notes}
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </DashboardCard>
+            )}
           </div>
         </motion.div>
       </main>

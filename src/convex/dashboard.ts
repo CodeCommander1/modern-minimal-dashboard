@@ -328,3 +328,60 @@ export const saveInterestsResult = mutation({
     return "saved";
   },
 });
+
+export const createVacantSeat = mutation({
+  args: {
+    collegeName: v.string(),
+    branch: v.string(),
+    seats: v.number(),
+    lastDate: v.number(), // ms since epoch
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Not authenticated");
+
+    if (args.seats <= 0) throw new Error("Seats must be greater than 0");
+    if (Number.isNaN(args.lastDate) || args.lastDate <= 0) {
+      throw new Error("Invalid last date");
+    }
+
+    await ctx.db.insert("vacantSeats", {
+      userId: user._id,
+      collegeName: args.collegeName.trim(),
+      branch: args.branch.trim(),
+      seats: Math.floor(args.seats),
+      lastDate: args.lastDate,
+      notes: args.notes?.trim(),
+    });
+    return "ok";
+  },
+});
+
+// College admin: list my entries
+export const listMyVacantSeats = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
+    return await ctx.db
+      .query("vacantSeats")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .collect();
+  },
+});
+
+// Students: list open (not expired) entries
+export const listOpenVacantSeats = query({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    // Return those whose lastDate >= now, ordered by lastDate ascending
+    return await ctx.db
+      .query("vacantSeats")
+      .withIndex("by_lastDate", (q) => q.gte("lastDate", now))
+      .order("asc")
+      .take(20);
+  },
+});

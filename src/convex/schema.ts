@@ -108,6 +108,19 @@ const schema = defineSchema(
       applicationUrl: v.string(),
       category: v.string(),
     }).index("by_deadline", ["deadline"]).index("by_category", ["category"]),
+
+    // Add a new table to track college vacant seats
+    vacantSeats: defineTable({
+      userId: v.id("users"),
+      collegeName: v.string(),
+      branch: v.string(),
+      seats: v.number(),
+      lastDate: v.number(), // ms since epoch
+      notes: v.optional(v.string()),
+    })
+      .index("by_user", ["userId"])
+      .index("by_branch", ["branch"])
+      .index("by_lastDate", ["lastDate"]),
   },
   {
     schemaValidation: false,
