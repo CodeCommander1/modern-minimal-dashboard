@@ -131,19 +131,7 @@ export default function Dashboard() {
               </div>
             </DashboardCard>
 
-            {/* Goals */}
-            <DashboardCard
-              title="GOALS"
-              description="Set and track goals"
-              icon={Target}
-            >
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary mb-1">
-                  {dashboardData?.activeGoals || 0}
-                </div>
-                <p className="text-sm text-muted-foreground">Active goals</p>
-              </div>
-            </DashboardCard>
+            {/* Goals card removed */}
 
             {/* Scores */}
             <DashboardCard
