@@ -94,6 +94,7 @@ export default function Dashboard() {
               title="PROGRESS TRACKER"
               description="Track your milestones"
               icon={TrendingUp}
+              onClick={() => navigate("/progress-tracker")}
             >
               <div className="space-y-3">
                 {dashboardData?.progressData?.slice(0, 2).map((progress, index) => (
