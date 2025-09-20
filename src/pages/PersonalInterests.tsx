@@ -125,15 +125,15 @@ export default function PersonalInterestsPage() {
                   >
                     <label className="flex items-center gap-2 rounded-md border p-2">
                       <RadioGroupItem value="Science" />
-                      <span className="text-sm">Option A</span>
+                      <span className="text-sm">option a</span>
                     </label>
                     <label className="flex items-center gap-2 rounded-md border p-2">
                       <RadioGroupItem value="Commerce" />
-                      <span className="text-sm">Option B</span>
+                      <span className="text-sm">option b</span>
                     </label>
                     <label className="flex items-center gap-2 rounded-md border p-2">
                       <RadioGroupItem value="Arts" />
-                      <span className="text-sm">Option C</span>
+                      <span className="text-sm">option c</span>
                     </label>
                   </RadioGroup>
                 </CardContent>
