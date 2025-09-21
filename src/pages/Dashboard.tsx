@@ -400,6 +400,7 @@ export default function Dashboard() {
 
   // Add a curated list of Government Colleges (India)
   const GOV_COLLEGES: Array<string> = [
+    // Engineering & Tech
     "IISc Bangalore",
     "IIT Bombay",
     "IIT Delhi",
@@ -425,16 +426,73 @@ export default function Dashboard() {
     "NIT Warangal",
     "NIT Rourkela",
     "NIT Calicut",
+    "DTU (Delhi Technological University)",
+    "NSUT Delhi",
+    "Jadavpur University (Engineering)",
+    "Anna University",
+    "COEP Tech Pune",
+    "MNNIT Allahabad",
+    "IIIT Hyderabad",
+    "IIIT Bangalore",
+
+    // Medical & Health Sciences
     "AIIMS Delhi",
-    "JNU",
+    "AIIMS Bhopal",
+    "AIIMS Bhubaneswar",
+    "AIIMS Jodhpur",
+    "JIPMER Puducherry",
+    "PGIMER Chandigarh",
+    "KGMU Lucknow",
+
+    // Pure Sciences & Research
+    "TIFR Mumbai",
+    "NISER Bhubaneswar",
+    "IISER Pune",
+    "IISER Kolkata",
+    "IISER Mohali",
+    "IISER Bhopal",
+    "IISER Tirupati",
+
+    // Arts, Commerce, Social Sciences, Multidisciplinary
     "University of Delhi",
-    "BHU",
-    "AMU",
-    "ISI Kolkata",
+    "Jawaharlal Nehru University (JNU)",
+    "Banaras Hindu University (BHU)",
+    "Aligarh Muslim University (AMU)",
+    "University of Calcutta",
+    "University of Mumbai",
+    "Savitribai Phule Pune University",
+    "Osmania University",
+    "University of Hyderabad",
+    "Panjab University",
+    "Jamia Millia Islamia",
+
+    // Law
+    "NLSIU Bangalore",
+    "NALSAR Hyderabad",
+    "NLU Delhi",
+    "WBNUJS Kolkata",
+    "NLU Jodhpur",
+
+    // Design, Fashion, Architecture
+    "NID Ahmedabad",
+    "NID Bengaluru",
+    "NIFT Delhi",
+    "NIFT Mumbai",
+    "SPA Delhi",
+
+    // Agriculture & Allied
+    "IARI Delhi",
+    "Punjab Agricultural University",
+    "GBPUAT Pantnagar",
+
+    // Management (PG) – Public Institutions
     "IIM Ahmedabad",
     "IIM Bangalore",
     "IIM Calcutta",
     "IIM Lucknow",
+
+    // Statistics & Data
+    "ISI Kolkata",
   ];
 
   if (isLoading) {
