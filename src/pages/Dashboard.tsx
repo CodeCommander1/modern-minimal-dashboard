@@ -1161,21 +1161,24 @@ export default function Dashboard() {
               title="GOVERNMENT COLLEGES"
               description="Explore top government institutions"
               icon={GraduationCap}
-              onClick={() => window.open("/career-path", "_blank", "noopener,noreferrer")}
+              onClick={() => window.open("/government-colleges", "_blank", "noopener,noreferrer")}
             >
               <div className="space-y-3">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pr-1">
                   {GOV_COLLEGES.map((c) => (
                     <span
                       key={c}
-                      className="text-xs rounded-md border bg-muted px-2 py-1"
+                      className="text-xs rounded-md border bg-muted px-2 py-1 cursor-pointer hover:bg-muted/80"
+                      onClick={() => window.open("/government-colleges", "_blank", "noopener,noreferrer")}
+                      aria-label={`Open Government Colleges page for ${c}`}
+                      role="button"
                     >
                       {c}
                     </span>
                   ))}
                 </div>
                 <div className="flex justify-end">
-                  <Button size="sm" onClick={() => window.open("/career-path", "_blank", "noopener,noreferrer")}>
+                  <Button size="sm" onClick={() => window.open("/government-colleges", "_blank", "noopener,noreferrer")}>
                     Government Colleges
                   </Button>
                 </div>

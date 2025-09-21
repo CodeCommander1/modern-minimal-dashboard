@@ -64,6 +64,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/to-do-list" element={<TodoList />} />
             <Route path="/scores" element={<Scores />} />
             <Route path="/career-path" element={<CareerPath />} />
+            <Route path="/government-colleges" element={<CareerPath />} />
             <Route path="/scholarships" element={<Scholarships />} />
             <Route path="/career-goal" element={<CareerGoalPage />} />
             <Route path="/personal-interests" element={<PersonalInterestsPage />} />
