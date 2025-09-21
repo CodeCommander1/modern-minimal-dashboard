@@ -398,6 +398,16 @@ export default function Dashboard() {
     "oklch(70% 0.12 210)",
   ];
 
+  // Add a local slugify helper near GOV_COLLEGES definition
+  function slugify(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/\s*\(([^)]+)\)/g, " $1") // move abbreviations into tokens
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+
   // Add a curated list of Government Colleges (India)
   const GOV_COLLEGES: Array<string> = [
     // Engineering & Tech
@@ -1164,22 +1174,34 @@ export default function Dashboard() {
               onClick={() => window.open("/government-colleges", "_blank", "noopener,noreferrer")}
             >
               <div className="space-y-3">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pr-1">
-                  {GOV_COLLEGES.map((c) => (
-                    <span
-                      key={c}
-                      className="text-xs rounded-md border bg-muted px-2 py-1 cursor-pointer hover:bg-muted/80"
-                      onClick={() => window.open("/government-colleges", "_blank", "noopener,noreferrer")}
-                      aria-label={`Open Government Colleges page for ${c}`}
-                      role="button"
-                    >
-                      {c}
-                    </span>
-                  ))}
+                {/* Streamlined geometric chips grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {GOV_COLLEGES.map((c) => {
+                    const href = `/government-colleges/${slugify(c)}`;
+                    return (
+                      <button
+                        key={c}
+                        className="w-full text-left text-xs rounded-lg border bg-muted/60 px-2.5 py-2 hover:bg-muted transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(href, "_blank", "noopener,noreferrer");
+                        }}
+                        aria-label={`Open details for ${c}`}
+                      >
+                        {c}
+                      </button>
+                    );
+                  })}
                 </div>
                 <div className="flex justify-end">
-                  <Button size="sm" onClick={() => window.open("/government-colleges", "_blank", "noopener,noreferrer")}>
-                    Government Colleges
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open("/government-colleges", "_blank", "noopener,noreferrer");
+                    }}
+                  >
+                    Open All
                   </Button>
                 </div>
               </div>
