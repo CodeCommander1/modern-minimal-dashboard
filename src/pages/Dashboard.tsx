@@ -34,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart as RePieChart, Pie, Cell, Tooltip as ReTooltip, Legend as ReLegend, ResponsiveContainer } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
   const { isLoading, isAuthenticated, user } = useAuth();
@@ -118,6 +119,10 @@ export default function Dashboard() {
   const createVacantSeat = useMutation(api.dashboard.createVacantSeat);
   const mySeats = useQuery(api.dashboard.listMyVacantSeats);
   const openSeats = useQuery(api.dashboard.listOpenVacantSeats);
+
+  // ADD: Government colleges data
+  const govColleges = useQuery(api.dashboard.listGovernmentColleges, { stream: undefined }) ?? [];
+  const seedGovColleges = useMutation(api.dashboard.seedGovernmentColleges);
 
   // Add: Vacant Seats dialog state
   const [seatDialogOpen, setSeatDialogOpen] = useState(false);
@@ -1166,7 +1171,76 @@ export default function Dashboard() {
               </DashboardCard>
             )}
 
-            {/* Government Colleges card removed */}
+            {/* Government Colleges */}
+            <DashboardCard
+              title="GOVERNMENT COLLEGES"
+              description="Explore public colleges across streams"
+              icon={GraduationCap}
+              onClick={() => {}}
+            >
+              <div className="space-y-3">
+                {govColleges.length === 0 ? (
+                  <div className="flex items-center justify-between rounded-md border p-3">
+                    <p className="text-sm text-muted-foreground">
+                      No colleges found. Load sample data to get started.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          await seedGovColleges({});
+                          toast.success("Loaded sample government colleges");
+                        } catch {
+                          toast.error("Failed to load colleges");
+                        }
+                      }}
+                    >
+                      Load Sample Colleges
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="max-h-64 overflow-auto pr-1 space-y-2">
+                    {govColleges.slice(0, 30).map((c) => (
+                      <div key={c._id} className="rounded-md border p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold leading-tight">{c.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {c.city}, {c.state}
+                            </p>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(c.lastDate).toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {c.offersScience && <Badge variant="secondary">Science</Badge>}
+                          {c.offersCommerce && <Badge variant="secondary">Commerce</Badge>}
+                          {c.offersArts && <Badge variant="secondary">Arts</Badge>}
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
+                          <div className="rounded border p-1.5">
+                            <p className="text-muted-foreground">Science</p>
+                            <p className="font-semibold">{c.seatsScience ?? "-"}</p>
+                          </div>
+                          <div className="rounded border p-1.5">
+                            <p className="text-muted-foreground">Commerce</p>
+                            <p className="font-semibold">{c.seatsCommerce ?? "-"}</p>
+                          </div>
+                          <div className="rounded border p-1.5">
+                            <p className="text-muted-foreground">Arts</p>
+                            <p className="font-semibold">{c.seatsArts ?? "-"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </DashboardCard>
           </div>
         </motion.div>
       </main>
