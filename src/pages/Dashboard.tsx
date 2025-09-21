@@ -1166,46 +1166,7 @@ export default function Dashboard() {
               </DashboardCard>
             )}
 
-            {/* Government Colleges */}
-            <DashboardCard
-              title="GOVERNMENT COLLEGES"
-              description="Explore top government institutions"
-              icon={GraduationCap}
-              onClick={() => window.open("/government-colleges", "_blank", "noopener,noreferrer")}
-            >
-              <div className="space-y-3">
-                {/* Streamlined geometric chips grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {GOV_COLLEGES.map((c) => {
-                    const href = `/government-colleges/${slugify(c)}`;
-                    return (
-                      <button
-                        key={c}
-                        className="w-full text-left text-xs rounded-lg border bg-muted/60 px-2.5 py-2 hover:bg-muted transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(href, "_blank", "noopener,noreferrer");
-                        }}
-                        aria-label={`Open details for ${c}`}
-                      >
-                        {c}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-end">
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open("/government-colleges", "_blank", "noopener,noreferrer");
-                    }}
-                  >
-                    Open All
-                  </Button>
-                </div>
-              </div>
-            </DashboardCard>
+            {/* Government Colleges card removed */}
           </div>
         </motion.div>
       </main>
