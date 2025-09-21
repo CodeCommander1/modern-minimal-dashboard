@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const data = useQuery(api.dashboard.getDashboardOverview);
   const class10Scores = useQuery(api.dashboard.getScoresByClassStream, { classLevel: "class10" }) ?? [];
+  const openSeats = useQuery(api.dashboard.listOpenVacantSeats) ?? [];
 
   // Local persisted aptitude score (0-20) if not stored server-side
   const [aptScore, setAptScore] = useState<number>(() => {
@@ -90,6 +91,30 @@ export default function ProfilePage() {
   function computeAptitudeStreamScores(score0to20: number) {
     const pct = Math.max(0, Math.min(20, score0to20)) * 5; // 20 -> 100
     return { Science: pct, Commerce: pct, Arts: pct };
+  }
+
+  // Duplicate openSeats declaration removed
+
+  // Stream-based course recommendations (simple, lightweight)
+  function getCoursesForStream(stream: "Science" | "Commerce" | "Arts"): Array<string> {
+    if (stream === "Science") {
+      return ["B.Tech (CSE/ME/EE)", "MBBS/BDS", "B.Sc (Physics/Chem/Math)", "BCA", "Data Science"];
+    }
+    if (stream === "Commerce") {
+      return ["B.Com", "BBA", "Economics (Hons)", "CA/CS/CMA (pro)", "Banking & Finance"];
+    }
+    return ["BA (Hons)", "BJMC (Journalism)", "B.Des", "Fine Arts", "Psychology"];
+  }
+
+  // Stream-based top colleges (static + concise)
+  function getTopCollegesForStream(stream: "Science" | "Commerce" | "Arts"): Array<string> {
+    if (stream === "Science") {
+      return ["IIT Bombay", "IIT Delhi", "AIIMS Delhi", "IISc Bangalore", "NIT Trichy"];
+    }
+    if (stream === "Commerce") {
+      return ["SRCC (DU)", "Christ University", "NMIMS", "St. Xavier's", "DU Colleges"];
+    }
+    return ["JNU", "University of Delhi", "NID Ahmedabad", "NIFT Delhi", "Jamia Millia Islamia"];
   }
 
   // Weights
@@ -468,6 +493,160 @@ export default function ProfilePage() {
                         </ResponsiveContainer>
                       </ChartContainer>
                     </div>
+                  </div>
+                </div>
+
+                {/* NEW: Recommended Courses */}
+                <div className="mt-6 rounded-lg border p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">Recommended Courses</p>
+                      <p className="text-xs text-muted-foreground">
+                        Curated from your {recommendedStream} fit and overall aptitude.
+                      </p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => navigate("/career-path")}>
+                      View Career Path
+                    </Button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {getCoursesForStream(recommendedStream).map((c) => (
+                      <span key={c} className="text-xs rounded-md border bg-muted px-2.5 py-1">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* NEW: College Suggestions */}
+                <div className="mt-4 rounded-lg border p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">Recommended Colleges</p>
+                      <p className="text-xs text-muted-foreground">
+                        Based on stream fit and current openings (if available).
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => window.open("/government-colleges", "_blank", "noopener,noreferrer")}
+                    >
+                      Open All
+                    </Button>
+                  </div>
+
+                  {/* Static top picks */}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {getTopCollegesForStream(recommendedStream).map((c) => (
+                      <span key={c} className="text-xs rounded-md border bg-muted/60 px-2.5 py-1">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Live open seats (if any) */}
+                  {(openSeats ?? []).length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-xs text-muted-foreground mb-2">Open Seats</p>
+                      <div className="grid sm:grid-cols-2 gap-2">
+                        {(openSeats ?? []).slice(0, 4).map((s) => (
+                          <div key={s._id} className="rounded-md border p-2 text-xs">
+                            <div className="flex justify-between">
+                              <span className="font-medium">{s.collegeName}</span>
+                              <span className="text-green-600">Open</span>
+                            </div>
+                            <div className="flex justify-between mt-1">
+                              <span className="text-muted-foreground">Branch: {s.branch}</span>
+                              <span>Seats: {s.seats}</span>
+                            </div>
+                            <p className="mt-1">Apply by: {new Date(s.lastDate).toLocaleDateString()}</p>
+                            {s.notes && <p className="text-[11px] text-muted-foreground mt-1">{s.notes}</p>}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-2 flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => navigate("/dashboard")}
+                          title="Go to dashboard to see seats module"
+                        >
+                          Apply to Colleges
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* NEW: Career Path – Next Steps */}
+                <div className="mt-4 rounded-lg border p-4">
+                  <p className="text-sm font-semibold">Career Path — Next Steps</p>
+                  <p className="text-xs text-muted-foreground">
+                    Short-term actions and a simple long-term direction aligned to {recommendedStream}.
+                  </p>
+                  <div className="mt-3 grid sm:grid-cols-2 gap-3 text-sm">
+                    {/* Short-term */}
+                    <div className="rounded-md border p-3">
+                      <p className="text-xs text-muted-foreground mb-2">Short-term</p>
+                      <ul className="list-disc pl-4 space-y-1">
+                        {recommendedStream === "Science" && (
+                          <>
+                            <li>Select core subjects (PCM/PCB) for Class 11</li>
+                            <li>Start prep for JEE/NEET basics</li>
+                            <li>Strengthen Math/Science fundamentals</li>
+                          </>
+                        )}
+                        {recommendedStream === "Commerce" && (
+                          <>
+                            <li>Choose Accountancy/Economics/Math</li>
+                            <li>Explore CA/CS Foundation basics</li>
+                            <li>Practice logical reasoning & data analysis</li>
+                          </>
+                        )}
+                        {recommendedStream === "Arts" && (
+                          <>
+                            <li>Pick strong humanities subjects</li>
+                            <li>Build a reading/writing or design portfolio</li>
+                            <li>Practice communication and critical thinking</li>
+                          </>
+                        )}
+                      </ul>
+                    </div>
+                    {/* Long-term */}
+                    <div className="rounded-md border p-3">
+                      <p className="text-xs text-muted-foreground mb-2">Long-term</p>
+                      <ul className="list-disc pl-4 space-y-1">
+                        {recommendedStream === "Science" && (
+                          <>
+                            <li>Target roles: Software Engineer, Doctor, Data Scientist</li>
+                            <li>Plan internships and projects in tech/health</li>
+                            <li>Prepare for relevant entrance exams</li>
+                          </>
+                        )}
+                        {recommendedStream === "Commerce" && (
+                          <>
+                            <li>Target roles: CA, Investment Analyst, Business Manager</li>
+                            <li>Internships in finance/startups</li>
+                            <li>Explore certifications (CFA, NISM)</li>
+                          </>
+                        )}
+                        {recommendedStream === "Arts" && (
+                          <>
+                            <li>Target roles: Journalist, Designer, Policy Analyst</li>
+                            <li>Real-world projects, communication skills</li>
+                            <li>Entrance tests for design/media/law if relevant</li>
+                          </>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex justify-end gap-2">
+                    <Button size="sm" variant="outline" onClick={() => navigate("/career-path")}>
+                      View Career Path
+                    </Button>
+                    <Button size="sm" onClick={() => window.open("/government-colleges", "_blank", "noopener,noreferrer")}>
+                      Explore Colleges
+                    </Button>
                   </div>
                 </div>
               </CardContent>
