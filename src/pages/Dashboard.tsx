@@ -1176,7 +1176,7 @@ export default function Dashboard() {
               title="GOVERNMENT COLLEGES"
               description="Explore public colleges across streams"
               icon={GraduationCap}
-              onClick={() => {}}
+              onClick={() => navigate("/government-colleges")}
             >
               <div className="space-y-3">
                 {govColleges.length === 0 ? (
