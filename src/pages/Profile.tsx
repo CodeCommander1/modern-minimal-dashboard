@@ -7,10 +7,144 @@ import { motion } from "framer-motion";
 import { ArrowLeft, User, LineChart, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useMemo, useState } from "react";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  ResponsiveContainer,
+  BarChart as ReBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as ReTooltip,
+  Legend as ReLegend,
+  PieChart as RePieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const data = useQuery(api.dashboard.getDashboardOverview);
+  const class10Scores = useQuery(api.dashboard.getScoresByClassStream, { classLevel: "class10" }) ?? [];
+
+  // Local persisted aptitude score (0-20) if not stored server-side
+  const [aptScore, setAptScore] = useState<number>(() => {
+    const raw = typeof window !== "undefined" ? window.localStorage.getItem("profile_aptitude_score") : null;
+    const n = raw ? Number(raw) : NaN;
+    return Number.isFinite(n) ? Math.max(0, Math.min(20, n)) : 0;
+  });
+  const saveAptScore = () => {
+    try {
+      window.localStorage.setItem("profile_aptitude_score", String(aptScore));
+    } catch {}
+  };
+
+  // Extract interests result if saved previously
+  const interestsResult = (data?.user as any)?.interestsResult as
+    | { science: number; commerce: number; arts: number; recommended?: "Science" | "Commerce" | "Arts" }
+    | undefined;
+
+  // Academic grouping for streams (Class 10)
+  function computeAcademicStreamScores(items: Array<{ subject: string; score: number; maxScore: number }>) {
+    const norm = (s: number, m: number) => (m > 0 ? (s / m) * 100 : 0);
+    const buckets: Record<"Science" | "Commerce" | "Arts", Array<number>> = { Science: [], Commerce: [], Arts: [] };
+
+    const sciSet = new Set(["science", "physics", "chemistry", "biology", "math", "mathematics"]);
+    const comSet = new Set(["mathematics", "math", "economics", "business studies", "accountancy", "accounts"]);
+    const artSet = new Set(["english", "history", "political science", "geography", "sociology", "social studies", "civics"]);
+
+    for (const row of items) {
+      const subj = (row.subject || "").toLowerCase().trim();
+      const p = norm(Number(row.score) || 0, Number(row.maxScore) || 0);
+      if (sciSet.has(subj)) buckets.Science.push(p);
+      if (comSet.has(subj)) buckets.Commerce.push(p);
+      if (artSet.has(subj)) buckets.Arts.push(p);
+      // Heuristics for generic subject names
+      if (subj === "science") buckets.Science.push(p);
+      if (subj === "social science" || subj === "social studies") buckets.Arts.push(p);
+    }
+
+    const avg = (arr: Array<number>) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+    return {
+      Science: Math.round(avg(buckets.Science)),
+      Commerce: Math.round(avg(buckets.Commerce)),
+      Arts: Math.round(avg(buckets.Arts)),
+    };
+  }
+
+  // Interests mapping to 0-100 by normalizing to total answered
+  function computeInterestsStreamScores(ir: typeof interestsResult | undefined) {
+    if (!ir) return { Science: 0, Commerce: 0, Arts: 0 };
+    const s = Math.max(0, ir.science || 0);
+    const c = Math.max(0, ir.commerce || 0);
+    const a = Math.max(0, ir.arts || 0);
+    const total = s + c + a;
+    if (total === 0) return { Science: 0, Commerce: 0, Arts: 0 };
+    return {
+      Science: Math.round((s / total) * 100),
+      Commerce: Math.round((c / total) * 100),
+      Arts: Math.round((a / total) * 100),
+    };
+  }
+
+  // Aptitude contribution: map 0-20 to 0-100 uniformly for all streams (neutral aptitude)
+  function computeAptitudeStreamScores(score0to20: number) {
+    const pct = Math.max(0, Math.min(20, score0to20)) * 5; // 20 -> 100
+    return { Science: pct, Commerce: pct, Arts: pct };
+  }
+
+  // Weights
+  const W_ACAD = 0.4;
+  const W_INT = 0.3;
+  const W_APT = 0.3;
+
+  // Compute components
+  const academic = computeAcademicStreamScores(class10Scores as any);
+  const interestsScores = computeInterestsStreamScores(interestsResult);
+  const aptitude = computeAptitudeStreamScores(aptScore);
+
+  // Final per-stream scores
+  const finalScores = {
+    Science: Math.round(W_ACAD * academic.Science + W_INT * interestsScores.Science + W_APT * aptitude.Science),
+    Commerce: Math.round(W_ACAD * academic.Commerce + W_INT * interestsScores.Commerce + W_APT * aptitude.Commerce),
+    Arts: Math.round(W_ACAD * academic.Arts + W_INT * interestsScores.Arts + W_APT * aptitude.Arts),
+  };
+
+  const recommendedStream = (() => {
+    // Fix: use a mutable, explicitly-typed array (not `as const`) to allow sorting
+    const entries: Array<["Science" | "Commerce" | "Arts", number]> = [
+      ["Science", finalScores.Science],
+      ["Commerce", finalScores.Commerce],
+      ["Arts", finalScores.Arts],
+    ];
+    entries.sort((a, b) => b[1] - a[1]);
+    return entries[0][0];
+  })();
+
+  // Pie: contribution breakdown for the recommended stream
+  const contribPieData = (() => {
+    const pick = recommendedStream;
+    const a = W_ACAD * (academic as any)[pick];
+    const i = W_INT * (interestsScores as any)[pick];
+    const t = W_APT * (aptitude as any)[pick];
+    const total = a + i + t || 1;
+    return [
+      { name: "Academics", value: Math.round((a / total) * 100) },
+      { name: "Interests", value: Math.round((i / total) * 100) },
+      { name: "Aptitude", value: Math.round((t / total) * 100) },
+    ];
+  })();
+
+  const barData = [
+    { stream: "Science", score: finalScores.Science },
+    { stream: "Commerce", score: finalScores.Commerce },
+    { stream: "Arts", score: finalScores.Arts },
+  ];
+
+  const PIE_COLORS = [
+    "oklch(70% 0.12 140)", // Academics
+    "oklch(70% 0.16 60)",  // Interests
+    "oklch(70% 0.15 25)",  // Aptitude
+  ];
 
   const name = data?.user?.name || "Student";
   const email = data?.user?.email || "—";
@@ -210,6 +344,112 @@ export default function ProfilePage() {
               <CardContent className="text-sm text-muted-foreground">
                 Your progress and scores overview will appear here as you add more data.
               </CardContent>
+
+              {/* Recommended Stream Section */}
+              <CardContent className="mt-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Recommended Stream</p>
+                    <p className="text-xl font-semibold mt-1">{recommendedStream}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Based on 40% Academics (Class 10), 30% Interests, 30% Aptitude.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={20}
+                      value={aptScore}
+                      onChange={(e) => setAptScore(Math.max(0, Math.min(20, Number(e.target.value) || 0)))}
+                      className="w-28 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                      aria-label="Aptitude score out of 20"
+                    />
+                    <Button variant="outline" onClick={saveAptScore}>Save</Button>
+                    <Button onClick={() => { /* recompute via state changes */ }}>
+                      Update
+                    </Button>
+                    <Button variant="default" onClick={() => navigate("/career-path")}>
+                      View Suggestions
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Pie: Contribution Breakdown */}
+                  <div className="lg:col-span-1">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Contribution Breakdown ({recommendedStream})
+                    </p>
+                    <div className="h-56">
+                      <ChartContainer
+                        id="profile-reco-pie"
+                        config={{
+                          Academics: { label: "Academics", color: PIE_COLORS[0] },
+                          Interests: { label: "Interests", color: PIE_COLORS[1] },
+                          Aptitude: { label: "Aptitude", color: PIE_COLORS[2] },
+                        }}
+                        className="w-full h-full"
+                      >
+                        <ResponsiveContainer>
+                          <RePieChart>
+                            <Pie
+                              data={contribPieData}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={40}
+                              outerRadius={80}
+                              paddingAngle={3}
+                              stroke="hsl(var(--border))"
+                              strokeWidth={1}
+                            >
+                              {contribPieData.map((_, idx) => (
+                                <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <ReTooltip
+                              content={
+                                <ChartTooltipContent nameKey="name" labelKey="name" indicator="dot" />
+                              }
+                            />
+                            <ReLegend />
+                          </RePieChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </div>
+                  </div>
+
+                  {/* Bar: Stream Comparison */}
+                  <div className="lg:col-span-2">
+                    <p className="text-xs text-muted-foreground mb-2">Stream Score Comparison</p>
+                    <div className="h-56">
+                      <ChartContainer
+                        id="profile-reco-bar"
+                        config={{
+                          score: { label: "Score", color: "hsl(var(--primary))" },
+                        }}
+                        className="w-full h-full"
+                      >
+                        <ResponsiveContainer>
+                          <ReBarChart data={barData}>
+                            <XAxis dataKey="stream" />
+                            <YAxis />
+                            <ReTooltip
+                              content={
+                                <ChartTooltipContent nameKey="stream" labelKey="stream" indicator="dot" />
+                              }
+                            />
+                            <ReLegend />
+                            <Bar dataKey="score" fill="hsl(var(--primary))" />
+                          </ReBarChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
             </Card>
           )}
 
@@ -222,7 +462,7 @@ export default function ProfilePage() {
                 <p className="font-medium">How do I update my career goal?</p>
                 <p className="text-muted-foreground">Go to Career Goal and save a quick or SMART goal.</p>
                 <p className="font-medium mt-3">How to add sample data?</p>
-                <p className="text-muted-foreground">Use the “Add Sample Data” prompt on the Dashboard.</p>
+                <p className="text-muted-foreground">Use the "Add Sample Data" prompt on the Dashboard.</p>
               </CardContent>
             </Card>
           )}
