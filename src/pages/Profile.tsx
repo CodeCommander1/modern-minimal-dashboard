@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
@@ -25,6 +26,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const data = useQuery(api.dashboard.getDashboardOverview);
   const class10Scores = useQuery(api.dashboard.getScoresByClassStream, { classLevel: "class10" }) ?? [];
+  const class12Scores = useQuery(api.dashboard.getScoresByClassStream, { classLevel: "class12" }) ?? [];
   const openSeats = useQuery(api.dashboard.listOpenVacantSeats) ?? [];
 
   // Local persisted aptitude score (0-20) if not stored server-side
@@ -169,6 +171,43 @@ export default function ProfilePage() {
     "oklch(70% 0.12 140)", // Academics
     "oklch(70% 0.16 60)",  // Interests
     "oklch(70% 0.15 25)",  // Aptitude
+  ];
+
+  // Class 12 computations (parallel to Class 10)
+  const academic12 = computeAcademicStreamScores(class12Scores as any);
+  const finalScores12 = {
+    Science: Math.round(W_ACAD * academic12.Science + W_INT * interestsScores.Science + W_APT * aptitude.Science),
+    Commerce: Math.round(W_ACAD * academic12.Commerce + W_INT * interestsScores.Commerce + W_APT * aptitude.Commerce),
+    Arts: Math.round(W_ACAD * academic12.Arts + W_INT * interestsScores.Arts + W_APT * aptitude.Arts),
+  };
+
+  const recommendedStream12 = (() => {
+    const entries: Array<["Science" | "Commerce" | "Arts", number]> = [
+      ["Science", finalScores12.Science],
+      ["Commerce", finalScores12.Commerce],
+      ["Arts", finalScores12.Arts],
+    ];
+    entries.sort((a, b) => b[1] - a[1]);
+    return entries[0][0];
+  })();
+
+  const contribPieData12 = (() => {
+    const pick = recommendedStream12;
+    const a = W_ACAD * (academic12 as any)[pick];
+    const i = W_INT * (interestsScores as any)[pick];
+    const t = W_APT * (aptitude as any)[pick];
+    const total = a + i + t || 1;
+    return [
+      { name: "Academics", value: Math.round((a / total) * 100) },
+      { name: "Interests", value: Math.round((i / total) * 100) },
+      { name: "Aptitude", value: Math.round((t / total) * 100) },
+    ];
+  })();
+
+  const barData12 = [
+    { stream: "Science", score: finalScores12.Science },
+    { stream: "Commerce", score: finalScores12.Commerce },
+    { stream: "Arts", score: finalScores12.Arts },
   ];
 
   const name = data?.user?.name || "Student";
@@ -372,129 +411,250 @@ export default function ProfilePage() {
 
               {/* Recommended Stream Section */}
               <CardContent className="mt-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Recommended Stream</p>
-                    <p className="text-xl font-semibold mt-1">{recommendedStream}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Based on 40% Academics (Class 10), 30% Interests, 30% Aptitude.
-                    </p>
+                <Tabs defaultValue="class10" className="w-full">
+                  <TabsList className="grid grid-cols-2 w-full">
+                    <TabsTrigger value="class10">Class 10</TabsTrigger>
+                    <TabsTrigger value="class12">Class 12</TabsTrigger>
+                  </TabsList>
 
-                    {/* NEW: All Streams compact chips */}
-                    <div className="mt-3">
-                      <p className="text-xs text-muted-foreground mb-1">All Streams</p>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_140)] text-[oklch(35%_0.09_140)]">
-                          Science:
-                          <span className="ml-1 font-semibold text-[oklch(30%_0.12_140)]">{finalScores.Science}%</span>
-                        </span>
-                        <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_60)] text-[oklch(35%_0.10_60)]">
-                          Commerce:
-                          <span className="ml-1 font-semibold text-[oklch(30%_0.14_60)]">{finalScores.Commerce}%</span>
-                        </span>
-                        <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_25)] text-[oklch(35%_0.10_25)]">
-                          Arts:
-                          <span className="ml-1 font-semibold text-[oklch(30%_0.13_25)]">{finalScores.Arts}%</span>
-                        </span>
+                  {/* Class 10 Panel */}
+                  <TabsContent value="class10" className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Recommended Stream</p>
+                        <p className="text-xl font-semibold mt-1">{recommendedStream}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Based on 40% Academics (Class 10), 30% Interests, 30% Aptitude.
+                        </p>
+
+                        {/* All Streams compact chips (Class 10) */}
+                        <div className="mt-3">
+                          <p className="text-xs text-muted-foreground mb-1">All Streams</p>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_140)] text-[oklch(35%_0.09_140)]">
+                              Science:
+                              <span className="ml-1 font-semibold text-[oklch(30%_0.12_140)]">{finalScores.Science}%</span>
+                            </span>
+                            <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_60)] text-[oklch(35%_0.10_60)]">
+                              Commerce:
+                              <span className="ml-1 font-semibold text-[oklch(30%_0.14_60)]">{finalScores.Commerce}%</span>
+                            </span>
+                            <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_25)] text-[oklch(35%_0.10_25)]">
+                              Arts:
+                              <span className="ml-1 font-semibold text-[oklch(30%_0.13_25)]">{finalScores.Arts}%</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Control panel */}
+                      <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={20}
+                          value={aptScore}
+                          onChange={(e) => setAptScore(Math.max(0, Math.min(20, Number(e.target.value) || 0)))}
+                          className="w-28 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                          aria-label="Aptitude score out of 20"
+                        />
+                        <Button size="sm" variant="outline" onClick={saveAptScore}>Save</Button>
+                        <Button size="sm" onClick={() => { /* recompute via state changes */ }}>
+                          Update
+                        </Button>
+                        <Button size="sm" variant="default" onClick={() => navigate("/career-path")}>
+                          View Suggestions
+                        </Button>
                       </div>
                     </div>
-                  </div>
 
-                  {/* UPDATED: Compact control panel */}
-                  <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
-                    <input
-                      type="number"
-                      min={0}
-                      max={20}
-                      value={aptScore}
-                      onChange={(e) => setAptScore(Math.max(0, Math.min(20, Number(e.target.value) || 0)))}
-                      className="w-28 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                      aria-label="Aptitude score out of 20"
-                    />
-                    <Button size="sm" variant="outline" onClick={saveAptScore}>Save</Button>
-                    <Button size="sm" onClick={() => { /* recompute via state changes */ }}>
-                      Update
-                    </Button>
-                    <Button size="sm" variant="default" onClick={() => navigate("/career-path")}>
-                      View Suggestions
-                    </Button>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Pie: Contribution Breakdown (Class 10) */}
+                      <div className="lg:col-span-1">
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Contribution Breakdown ({recommendedStream})
+                        </p>
+                        <div className="h-56">
+                          <ChartContainer
+                            id="profile-reco-pie-c10"
+                            config={{
+                              Academics: { label: "Academics", color: PIE_COLORS[0] },
+                              Interests: { label: "Interests", color: PIE_COLORS[1] },
+                              Aptitude: { label: "Aptitude", color: PIE_COLORS[2] },
+                            }}
+                            className="w-full h-full"
+                          >
+                            <ResponsiveContainer>
+                              <RePieChart>
+                                <Pie
+                                  data={contribPieData}
+                                  dataKey="value"
+                                  nameKey="name"
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={40}
+                                  outerRadius={80}
+                                  paddingAngle={3}
+                                  stroke="hsl(var(--border))"
+                                  strokeWidth={1}
+                                >
+                                  {contribPieData.map((_, idx) => (
+                                    <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                                  ))}
+                                </Pie>
+                                <ReTooltip content={<ChartTooltipContent nameKey="name" labelKey="name" indicator="dot" />} />
+                                <ReLegend />
+                              </RePieChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
+                        </div>
+                      </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Pie: Contribution Breakdown */}
-                  <div className="lg:col-span-1">
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Contribution Breakdown ({recommendedStream})
-                    </p>
-                    <div className="h-56">
-                      <ChartContainer
-                        id="profile-reco-pie"
-                        config={{
-                          Academics: { label: "Academics", color: PIE_COLORS[0] },
-                          Interests: { label: "Interests", color: PIE_COLORS[1] },
-                          Aptitude: { label: "Aptitude", color: PIE_COLORS[2] },
-                        }}
-                        className="w-full h-full"
-                      >
-                        <ResponsiveContainer>
-                          <RePieChart>
-                            <Pie
-                              data={contribPieData}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={40}
-                              outerRadius={80}
-                              paddingAngle={3}
-                              stroke="hsl(var(--border))"
-                              strokeWidth={1}
-                            >
-                              {contribPieData.map((_, idx) => (
-                                <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <ReTooltip
-                              content={
-                                <ChartTooltipContent nameKey="name" labelKey="name" indicator="dot" />
-                              }
-                            />
-                            <ReLegend />
-                          </RePieChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
+                      {/* Bar: Stream Comparison (Class 10) */}
+                      <div className="lg:col-span-2">
+                        <p className="text-xs text-muted-foreground mb-2">Stream Score Comparison</p>
+                        <div className="h-56">
+                          <ChartContainer
+                            id="profile-reco-bar-c10"
+                            config={{
+                              score: { label: "Score", color: "hsl(var(--primary))" },
+                            }}
+                            className="w-full h-full"
+                          >
+                            <ResponsiveContainer>
+                              <ReBarChart data={barData}>
+                                <XAxis dataKey="stream" />
+                                <YAxis />
+                                <ReTooltip content={<ChartTooltipContent nameKey="stream" labelKey="stream" indicator="dot" />} />
+                                <ReLegend />
+                                <Bar dataKey="score" fill="hsl(var(--primary))" />
+                              </ReBarChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </TabsContent>
 
-                  {/* Bar: Stream Comparison */}
-                  <div className="lg:col-span-2">
-                    <p className="text-xs text-muted-foreground mb-2">Stream Score Comparison</p>
-                    <div className="h-56">
-                      <ChartContainer
-                        id="profile-reco-bar"
-                        config={{
-                          score: { label: "Score", color: "hsl(var(--primary))" },
-                        }}
-                        className="w-full h-full"
-                      >
-                        <ResponsiveContainer>
-                          <ReBarChart data={barData}>
-                            <XAxis dataKey="stream" />
-                            <YAxis />
-                            <ReTooltip
-                              content={
-                                <ChartTooltipContent nameKey="stream" labelKey="stream" indicator="dot" />
-                              }
-                            />
-                            <ReLegend />
-                            <Bar dataKey="score" fill="hsl(var(--primary))" />
-                          </ReBarChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
+                  {/* Class 12 Panel */}
+                  <TabsContent value="class12" className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Recommended Stream</p>
+                        <p className="text-xl font-semibold mt-1">{recommendedStream12}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Based on 40% Academics (Class 12), 30% Interests, 30% Aptitude.
+                        </p>
+
+                        {/* All Streams compact chips (Class 12) */}
+                        <div className="mt-3">
+                          <p className="text-xs text-muted-foreground mb-1">All Streams</p>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_140)] text-[oklch(35%_0.09_140)]">
+                              Science:
+                              <span className="ml-1 font-semibold text-[oklch(30%_0.12_140)]">{finalScores12.Science}%</span>
+                            </span>
+                            <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_60)] text-[oklch(35%_0.10_60)]">
+                              Commerce:
+                              <span className="ml-1 font-semibold text-[oklch(30%_0.14_60)]">{finalScores12.Commerce}%</span>
+                            </span>
+                            <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_25)] text-[oklch(35%_0.10_25)]">
+                              Arts:
+                              <span className="ml-1 font-semibold text-[oklch(30%_0.13_25)]">{finalScores12.Arts}%</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Control panel (shared aptitude input) */}
+                      <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={20}
+                          value={aptScore}
+                          onChange={(e) => setAptScore(Math.max(0, Math.min(20, Number(e.target.value) || 0)))}
+                          className="w-28 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                          aria-label="Aptitude score out of 20"
+                        />
+                        <Button size="sm" variant="outline" onClick={saveAptScore}>Save</Button>
+                        <Button size="sm" onClick={() => { /* recompute via state changes */ }}>
+                          Update
+                        </Button>
+                        <Button size="sm" variant="default" onClick={() => navigate("/career-path")}>
+                          View Suggestions
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Pie: Contribution Breakdown (Class 12) */}
+                      <div className="lg:col-span-1">
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Contribution Breakdown ({recommendedStream12})
+                        </p>
+                        <div className="h-56">
+                          <ChartContainer
+                            id="profile-reco-pie-c12"
+                            config={{
+                              Academics: { label: "Academics", color: PIE_COLORS[0] },
+                              Interests: { label: "Interests", color: PIE_COLORS[1] },
+                              Aptitude: { label: "Aptitude", color: PIE_COLORS[2] },
+                            }}
+                            className="w-full h-full"
+                          >
+                            <ResponsiveContainer>
+                              <RePieChart>
+                                <Pie
+                                  data={contribPieData12}
+                                  dataKey="value"
+                                  nameKey="name"
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={40}
+                                  outerRadius={80}
+                                  paddingAngle={3}
+                                  stroke="hsl(var(--border))"
+                                  strokeWidth={1}
+                                >
+                                  {contribPieData12.map((_, idx) => (
+                                    <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                                  ))}
+                                </Pie>
+                                <ReTooltip content={<ChartTooltipContent nameKey="name" labelKey="name" indicator="dot" />} />
+                                <ReLegend />
+                              </RePieChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
+                        </div>
+                      </div>
+
+                      {/* Bar: Stream Comparison (Class 12) */}
+                      <div className="lg:col-span-2">
+                        <p className="text-xs text-muted-foreground mb-2">Stream Score Comparison</p>
+                        <div className="h-56">
+                          <ChartContainer
+                            id="profile-reco-bar-c12"
+                            config={{
+                              score: { label: "Score", color: "hsl(var(--primary))" },
+                            }}
+                            className="w-full h-full"
+                          >
+                            <ResponsiveContainer>
+                              <ReBarChart data={barData12}>
+                                <XAxis dataKey="stream" />
+                                <YAxis />
+                                <ReTooltip content={<ChartTooltipContent nameKey="stream" labelKey="stream" indicator="dot" />} />
+                                <ReLegend />
+                                <Bar dataKey="score" fill="hsl(var(--primary))" />
+                              </ReBarChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
 
                 {/* NEW: Recommended Courses */}
                 <div className="mt-6 rounded-lg border p-4">
