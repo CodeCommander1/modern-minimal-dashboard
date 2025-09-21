@@ -114,6 +114,26 @@ const schema = defineSchema(
       category: v.string(),
     }).index("by_deadline", ["deadline"]).index("by_category", ["category"]),
 
+    // Government colleges directory
+    governmentColleges: defineTable({
+      name: v.string(),
+      city: v.string(),
+      state: v.string(),
+      officialUrl: v.string(),
+      offersScience: v.boolean(),
+      offersCommerce: v.boolean(),
+      offersArts: v.boolean(),
+      topCourses: v.array(v.string()),
+      seatsScience: v.optional(v.number()),
+      seatsCommerce: v.optional(v.number()),
+      seatsArts: v.optional(v.number()),
+      lastDate: v.number(), // application deadline
+    })
+      .index("by_offersScience", ["offersScience"])
+      .index("by_offersCommerce", ["offersCommerce"])
+      .index("by_offersArts", ["offersArts"])
+      .index("by_lastDate", ["lastDate"]),
+
     // Add a new table to track college vacant seats
     vacantSeats: defineTable({
       userId: v.id("users"),

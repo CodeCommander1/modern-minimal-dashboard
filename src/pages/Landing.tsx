@@ -12,10 +12,22 @@ import {
   Star
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [streamFilter, setStreamFilter] = useState<"All" | "Science" | "Commerce" | "Arts">("All");
+  const [search, setSearch] = useState("");
+  const colleges =
+    useQuery(api.dashboard.listGovernmentColleges, {
+      stream: streamFilter === "All" ? undefined : streamFilter,
+    }) ?? [];
+  const seedColleges = useMutation(api.dashboard.seedGovernmentColleges);
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
@@ -170,6 +182,151 @@ export default function Landing() {
                 </p>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Government Colleges Section */}
+      <section className="py-24 px-8 bg-muted/30">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8"
+          >
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
+                Government Colleges
+              </h2>
+              <p className="text-muted-foreground">
+                Explore top public colleges across Science, Commerce, and Arts
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="inline-flex rounded-md border p-1 bg-background">
+                {(["All", "Science", "Commerce", "Arts"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStreamFilter(s)}
+                    className={`h-9 rounded px-3 text-sm font-medium transition-colors ${
+                      streamFilter === s
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <div className="w-64">
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by name or city"
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Optional seeding helper if empty */}
+          {colleges.length === 0 && (
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <p className="text-muted-foreground">
+                No colleges found. Load sample data to get started.
+              </p>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  await seedColleges({});
+                }}
+              >
+                Load Sample Colleges
+              </Button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {colleges
+              .filter((c) => {
+                if (!search.trim()) return true;
+                const q = search.toLowerCase();
+                return (
+                  c.name.toLowerCase().includes(q) ||
+                  c.city.toLowerCase().includes(q) ||
+                  c.state.toLowerCase().includes(q)
+                );
+              })
+              .map((c, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.03 * idx }}
+                  className="bg-card text-card-foreground rounded-xl border p-5 shadow-sm hover:shadow-sm transition-all duration-200"
+                >
+                  <div className="mb-3">
+                    <h3 className="font-semibold text-lg tracking-tight">{c.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {c.city}, {c.state}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {c.offersScience && <Badge variant="secondary">Science</Badge>}
+                    {c.offersCommerce && <Badge variant="secondary">Commerce</Badge>}
+                    {c.offersArts && <Badge variant="secondary">Arts</Badge>}
+                  </div>
+
+                  <div className="mb-3">
+                    <p className="text-sm font-medium mb-1">Top Courses</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {c.topCourses.slice(0, 4).map((course: string, i: number) => (
+                        <span
+                          key={i}
+                          className="text-xs bg-muted text-muted-foreground rounded px-2 py-1"
+                        >
+                          {course}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mb-3 grid grid-cols-3 gap-2 text-sm">
+                    <div className="rounded border p-2">
+                      <p className="text-muted-foreground text-xs">Science</p>
+                      <p className="font-semibold">
+                        {c.seatsScience ?? "-"}
+                      </p>
+                    </div>
+                    <div className="rounded border p-2">
+                      <p className="text-muted-foreground text-xs">Commerce</p>
+                      <p className="font-semibold">
+                        {c.seatsCommerce ?? "-"}
+                      </p>
+                    </div>
+                    <div className="rounded border p-2">
+                      <p className="text-muted-foreground text-xs">Arts</p>
+                      <p className="font-semibold">
+                        {c.seatsArts ?? "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm mb-4">
+                    <span className="text-muted-foreground">Last Date</span>
+                    <span className="font-medium">
+                      {new Date(c.lastDate).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <Button asChild className="w-full">
+                    <a href={c.officialUrl} target="_blank" rel="noreferrer">
+                      Apply / Details
+                    </a>
+                  </Button>
+                </motion.div>
+              ))}
           </div>
         </div>
       </section>
