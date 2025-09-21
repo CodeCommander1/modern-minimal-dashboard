@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Link } from "react-router";
 
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -66,6 +67,15 @@ export default function Landing() {
     { number: "500+", label: "Scholarships" },
     { number: "24/7", label: "Support" }
   ];
+
+  function slugify(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/\s*\(([^)]+)\)/g, " $1")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -321,9 +331,9 @@ export default function Landing() {
                   </div>
 
                   <Button asChild className="w-full">
-                    <a href={c.officialUrl} target="_blank" rel="noreferrer">
-                      Apply / Details
-                    </a>
+                    <Link to={`/government-colleges/${slugify(c.name)}`}>
+                      View Details
+                    </Link>
                   </Button>
                 </motion.div>
               ))}

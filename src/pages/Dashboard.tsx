@@ -1202,7 +1202,11 @@ export default function Dashboard() {
                 ) : (
                   <div className="max-h-64 overflow-auto pr-1 space-y-2">
                     {govColleges.slice(0, 30).map((c) => (
-                      <div key={c._id} className="rounded-md border p-3">
+                      <div
+                        key={c._id}
+                        className="rounded-md border p-3 cursor-pointer hover:bg-muted/40 transition-colors"
+                        onClick={() => navigate(`/government-colleges/${slugify(c.name)}`)}
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <p className="text-sm font-semibold leading-tight">{c.name}</p>
