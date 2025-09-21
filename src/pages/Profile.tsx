@@ -354,8 +354,29 @@ export default function ProfilePage() {
                     <p className="text-xs text-muted-foreground mt-1">
                       Based on 40% Academics (Class 10), 30% Interests, 30% Aptitude.
                     </p>
+
+                    {/* NEW: All Streams compact chips */}
+                    <div className="mt-3">
+                      <p className="text-xs text-muted-foreground mb-1">All Streams</p>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_140)] text-[oklch(35%_0.09_140)]">
+                          Science:
+                          <span className="ml-1 font-semibold text-[oklch(30%_0.12_140)]">{finalScores.Science}%</span>
+                        </span>
+                        <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_60)] text-[oklch(35%_0.10_60)]">
+                          Commerce:
+                          <span className="ml-1 font-semibold text-[oklch(30%_0.14_60)]">{finalScores.Commerce}%</span>
+                        </span>
+                        <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium bg-[oklch(96%_0.03_25)] text-[oklch(35%_0.10_25)]">
+                          Arts:
+                          <span className="ml-1 font-semibold text-[oklch(30%_0.13_25)]">{finalScores.Arts}%</span>
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  {/* UPDATED: Compact control panel */}
+                  <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
                     <input
                       type="number"
                       min={0}
@@ -365,11 +386,11 @@ export default function ProfilePage() {
                       className="w-28 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                       aria-label="Aptitude score out of 20"
                     />
-                    <Button variant="outline" onClick={saveAptScore}>Save</Button>
-                    <Button onClick={() => { /* recompute via state changes */ }}>
+                    <Button size="sm" variant="outline" onClick={saveAptScore}>Save</Button>
+                    <Button size="sm" onClick={() => { /* recompute via state changes */ }}>
                       Update
                     </Button>
-                    <Button variant="default" onClick={() => navigate("/career-path")}>
+                    <Button size="sm" variant="default" onClick={() => navigate("/career-path")}>
                       View Suggestions
                     </Button>
                   </div>
