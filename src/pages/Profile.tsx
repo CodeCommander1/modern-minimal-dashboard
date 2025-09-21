@@ -41,6 +41,9 @@ export default function ProfilePage() {
     } catch {}
   };
 
+  // Add: toggle to show full college list
+  const [showAllColleges, setShowAllColleges] = useState(false);
+
   // Extract interests result if saved previously
   const interestsResult = (data?.user as any)?.interestsResult as
     | { science: number; commerce: number; arts: number; recommended?: "Science" | "Commerce" | "Arts" }
@@ -689,9 +692,9 @@ export default function ProfilePage() {
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => window.open("/government-colleges", "_blank", "noopener,noreferrer")}
+                      onClick={() => setShowAllColleges(!showAllColleges)}
                     >
-                      Open All
+                      {showAllColleges ? "Hide" : "Show"} All
                     </Button>
                   </div>
 
@@ -734,6 +737,32 @@ export default function ProfilePage() {
                           Apply to Colleges
                         </Button>
                       </div>
+                    </div>
+                  )}
+
+                  {showAllColleges && (
+                    <div className="mt-4">
+                      <p className="text-xs text-muted-foreground mb-2">All Open Seats</p>
+                      {(openSeats ?? []).length > 0 ? (
+                        <div className="grid sm:grid-cols-2 gap-2">
+                          {(openSeats ?? []).map((s) => (
+                            <div key={s._id} className="rounded-md border p-2 text-xs">
+                              <div className="flex justify-between">
+                                <span className="font-medium">{s.collegeName}</span>
+                                <span className="text-green-600">Open</span>
+                              </div>
+                              <div className="flex justify-between mt-1">
+                                <span className="text-muted-foreground">Branch: {s.branch}</span>
+                                <span>Seats: {s.seats}</span>
+                              </div>
+                              <p className="mt-1">Apply by: {new Date(s.lastDate).toLocaleDateString()}</p>
+                              {s.notes && <p className="text-[11px] text-muted-foreground mt-1">{s.notes}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">No open seats available right now.</p>
+                      )}
                     </div>
                   )}
                 </div>
