@@ -1161,7 +1161,7 @@ export default function Dashboard() {
               title="GOVERNMENT COLLEGES"
               description="Explore top government institutions"
               icon={GraduationCap}
-              onClick={() => navigate("/career-path")}
+              onClick={() => window.open("/career-path", "_blank", "noopener,noreferrer")}
             >
               <div className="space-y-3">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pr-1">
@@ -1175,7 +1175,7 @@ export default function Dashboard() {
                   ))}
                 </div>
                 <div className="flex justify-end">
-                  <Button size="sm" onClick={() => navigate("/career-path")}>
+                  <Button size="sm" onClick={() => window.open("/career-path", "_blank", "noopener,noreferrer")}>
                     Government Colleges
                   </Button>
                 </div>
